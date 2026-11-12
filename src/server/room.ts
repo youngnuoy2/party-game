@@ -702,7 +702,7 @@ export class RoomManager {
     if (!r || room.phase !== 'PLAYING' || room.paused) return;
     const mod = GAMES[r.gameId];
     const step = r.steps[r.stepIndex];
-    if (!mod.isDone || !step || step.kind !== 'question') return;
+    if (!mod.isDone || !step || step.kind === 'reveal') return;
     const active = r.participants.filter((pid) => room.players[pid] && this.isOnline(pid));
     if (!active.length || !active.every((pid) => mod.isDone!(r, pid))) return;
     const at = Date.now() + EARLY_ADVANCE_MS;

@@ -72,7 +72,14 @@ export default function QuizGame({ state, me, act, setView }: GameProps) {
       <motion.div key={p.index} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card p-5 text-center">
         {p.big ? (
           <>
-            <div className="text-sm text-white/50">{p.prompt}</div>
+            {p.hint && (
+              <div className="mx-auto mb-2 inline-flex items-center gap-2 rounded-full border border-amber-300/50 bg-amber-300/15 px-5 py-1.5 text-xl font-bold text-amber-200">
+                분야: {p.hint}
+              </div>
+            )}
+            <div className="text-sm text-white/50">
+              {p.prompt} · {p.big.length}글자
+            </div>
             <div className="mt-2 font-display text-6xl tracking-[0.25em] text-emerald-300 drop-shadow-[0_0_20px_rgba(52,211,153,.5)]">{p.big}</div>
           </>
         ) : (
@@ -126,7 +133,7 @@ export default function QuizGame({ state, me, act, setView }: GameProps) {
         >
           <input
             className="input text-center text-2xl"
-            placeholder="정답 입력 (띄어쓰기 무관)"
+            placeholder={p.hint ? `${p.hint} 분야의 정답 입력` : '정답 입력 (띄어쓰기 무관)'}
             value={submitted?.text ?? text}
             onChange={(e) => setText(e.target.value)}
             disabled={!!submitted || isReveal || state.paused}

@@ -1,3 +1,4 @@
+import { POLYOMINOES, rotate, sameShape } from '../../shared/shapes';
 import { TYPING_PHRASES } from '../../data/typing';
 import type { MathDifficulty } from '../../shared/types';
 import { pick, rand, shuffle } from '../util';
@@ -210,4 +211,26 @@ export const senseGame = makeStreamGame({
     const choices = shuffle([...opts]);
     return { pub: { text: `${text} ≈ ?`, choices: choices.map((c) => c.toLocaleString('ko-KR')) }, answer: choices.indexOf(near) };
   },
+});
+
+// ───────────────────────── 도형 퍼즐 ─────────────────────────
+// 조각을 k번(90°) 돌려 빈칸과 같아지면 정답. 대칭 도형은 여러 k 가 정답일 수 있음.
+
+export const shapeGame = makeStreamGame({
+  id: 'shape',
+  durationMs: 25_000,
+  wrongLockMs: 800,
+  bonusSec: 8,
+  gen(settings): StreamQuestion {
+    const pool = POLYOMINOES.filter((p) => (settings.mathDifficulty === 'easy' ? !p.hard : settings.mathDifficulty === 'hard' ? p.hard : true));
+    const shape = pick(pool);
+    const holeRot = rand(0, 3);
+    const hole = rotate(shape.cells, holeRot);
+    let piece = hole;
+    let guard = 0;
+    while (sameShape(piece, hole) && guard++ < 20) piece = rotate(shape.cells, rand(0, 3));
+    const valid = [0, 1, 2, 3].filter((k) => sameShape(rotate(piece, k), hole)).join('');
+    return { pub: { hole, piece, choices: [] }, answer: valid };
+  },
+  check: (answer, raw) => Number.isInteger(raw) && (raw as number) >= 0 && (raw as number) <= 3 && String(answer).includes(String(raw)),
 });

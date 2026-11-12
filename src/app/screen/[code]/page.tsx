@@ -6,6 +6,8 @@ import { emitAck } from '@/lib/socket';
 import { isSoundOn, setSound, sfx, unlockAudio } from '@/lib/sound';
 import { useJoinUrl } from '@/lib/useJoinUrl';
 import { useOnConnect, useRoomStreams } from '@/lib/useRoom';
+import { useServerNow } from '@/lib/useNow';
+import { CupsBoard, cupsCaption, RhythmLane, type CupsPayload, type RhythmPayload } from '@/components/games/visuals';
 import { GAME_META, TIE_RULE } from '@/shared/gameMeta';
 import type { PublicState } from '@/shared/types';
 
@@ -216,19 +218,31 @@ function Calculating() {
 function Playing({ state }: { state: PublicState }) {
   const g = state.game!;
   const isQuiz = ['nonsense', 'chosung', 'ox'].includes(g.gameId);
+  // 10초 게임은 남은 시간이 힌트가 되므로, 컵 게임은 섞는 중에는 타이머 숨김
+  const showTimer = g.stepKind !== 'reveal' && g.gameId !== 'stop10' && !(g.gameId === 'cups' && g.stepKind !== 'question');
   return (
     <div className="flex h-full flex-col gap-6">
       <div className="flex items-center gap-6">
         <GameBadge gameId={g.gameId} size="lg" />
         {state.paused && <span className="rounded-full bg-amber-400/20 px-6 py-2 text-4xl text-amber-200">⏸ 일시정지</span>}
-        {g.stepKind !== 'reveal' && (
+        {showTimer && (
           <div className="ml-auto font-display text-7xl">
             <SecondsLeft endsAt={g.stepEndsAt} paused={state.paused} pausedRemain={state.pausedRemainMs} />
           </div>
         )}
       </div>
-      {g.stepKind !== 'reveal' && <TimerBar startedAt={g.stepStartedAt} endsAt={g.stepEndsAt} paused={state.paused} pausedRemain={state.pausedRemainMs} className="h-6" />}
-      {isQuiz ? <QuizBoard state={state} /> : <LiveBoard state={state} />}
+      {showTimer && <TimerBar startedAt={g.stepStartedAt} endsAt={g.stepEndsAt} paused={state.paused} pausedRemain={state.pausedRemainMs} className="h-6" />}
+      {isQuiz ? (
+        <QuizBoard state={state} />
+      ) : g.gameId === 'cups' ? (
+        <CupsScreen state={state} />
+      ) : g.gameId === 'rhythm' ? (
+        <RhythmScreen state={state} />
+      ) : g.gameId === 'stop10' ? (
+        <Stop10Screen state={state} />
+      ) : (
+        <LiveBoard state={state} />
+      )}
     </div>
   );
 }
@@ -264,7 +278,14 @@ function QuizBoard({ state }: { state: PublicState }) {
       <motion.div key={p.index} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="rounded-[2rem] border border-white/10 bg-white/5 px-12 py-10 text-center">
         {p.big ? (
           <>
-            <div className="text-4xl text-white/60">{p.prompt}</div>
+            {p.hint && (
+              <div className="mb-4 inline-flex items-center rounded-full border-2 border-amber-300/60 bg-amber-300/15 px-10 py-3 font-display text-6xl text-amber-200">
+                분야: {p.hint}
+              </div>
+            )}
+            <div className="text-4xl text-white/60">
+              {p.prompt} · {p.big.length}글자
+            </div>
             <div className="mt-3 font-display text-[10rem] leading-none tracking-[0.3em] text-emerald-300 drop-shadow-[0_0_30px_rgba(52,211,153,.5)]">{p.big}</div>
           </>
         ) : (
@@ -313,6 +334,81 @@ function QuizBoard({ state }: { state: PublicState }) {
           </span>
         </motion.div>
       )}
+    </div>
+  );
+}
+
+function CupsScreen({ state }: { state: PublicState }) {
+  const g = state.game!;
+  const p = g.payload as CupsPayload;
+  return (
+    <div className="flex flex-1 flex-col gap-6">
+      <div className="flex items-center gap-6 text-4xl">
+        <span className="rounded-full bg-white/10 px-5 py-1">
+          문제 {p.index + 1} / {p.total} · 컵 {p.n}개
+        </span>
+        <span className="font-display text-5xl">{cupsCaption(g.stepKind)}</span>
+        <span className="ml-auto text-white/70">
+          선택 {state.submitted} / {state.participantCount}명
+        </span>
+      </div>
+      <div className="flex flex-1 items-center px-24">
+        <CupsBoard p={p} stepKind={g.stepKind} stepStartedAt={g.stepStartedAt} big />
+      </div>
+      {g.stepKind === 'reveal' && p.reveal && (
+        <div className="rounded-[2rem] border border-emerald-400/40 bg-emerald-500/10 px-10 py-5 text-center font-display text-6xl text-emerald-300">
+          정답: {p.reveal.answer + 1}번 컵 · 정답자 {p.reveal.correctCount}명
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RhythmScreen({ state }: { state: PublicState }) {
+  const g = state.game!;
+  return (
+    <div className="grid flex-1 grid-cols-[1fr_760px] gap-10">
+      <RhythmLane p={g.payload as RhythmPayload} stepStartedAt={g.stepStartedAt} big metronome />
+      <LiveTop5 state={state} />
+    </div>
+  );
+}
+
+function Stop10Screen({ state }: { state: PublicState }) {
+  const g = state.game!;
+  const pl = g.payload as { visibleMs: number };
+  const now = useServerNow(30);
+  const elapsed = Math.max(0, now - g.stepStartedAt);
+  const visible = elapsed < pl.visibleMs;
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-10">
+      <div className="text-5xl text-white/80">
+        정확히 <b className="text-amber-200">10.00초</b>에 STOP!
+      </div>
+      <div className={cx('font-display tabular-nums leading-none', visible ? 'text-[16rem] text-white' : 'text-[16rem] text-white/30')}>
+        {visible ? (elapsed / 1000).toFixed(2) : '??.??'}
+      </div>
+      <div className="text-5xl">
+        STOP 누른 사람 <span className="font-display text-7xl gold-text">{state.submitted}</span> / {state.participantCount}명
+      </div>
+    </div>
+  );
+}
+
+function LiveTop5({ state }: { state: PublicState }) {
+  return (
+    <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8">
+      <div className="mb-6 font-display text-5xl">🔥 실시간 TOP 5</div>
+      <div className="space-y-4">
+        {state.liveBoard.map((r, i) => (
+          <div key={r.nickname + i} className="flex items-center gap-6 rounded-2xl bg-white/5 px-6 py-4 text-5xl">
+            <span className="w-16 font-display text-amber-300">{i + 1}</span>
+            <span className="flex-1 truncate font-bold">{r.nickname}</span>
+            <span className="font-display tabular-nums text-neon-cyan">{r.value}</span>
+          </div>
+        ))}
+        {!state.liveBoard.length && <div className="text-4xl text-white/40">기록 집계 중...</div>}
+      </div>
     </div>
   );
 }

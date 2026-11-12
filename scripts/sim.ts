@@ -154,6 +154,65 @@ async function main() {
           await act(b, { type: 'hit', attempt, ms: bi === 2 ? 1 : ms }); // 봇3: 1ms 조작 시도
           await sleep(300);
         }
+      } else if (gameId === 'target') {
+        while (isOn()) {
+          const t = b.me?.view?.t;
+          if (t) {
+            await sleep(200 + (1 - b.skill) * 500);
+            const r = await act(b, Math.random() < 0.15 ? { type: 'miss' } : { type: 'hit', id: t.id });
+            if (r.ok) b.me = { ...b.me!, view: r.data };
+          } else await sleep(100);
+          if (bi === 0 && t) {
+            const fast = await act(b, { type: 'hit', id: (b.me?.view as any)?.t?.id }); // 등장 즉시 명중 시도
+            assert(!fast.ok, '[target] 등장 직후(150ms 미만) 명중 차단');
+            break;
+          }
+        }
+      } else if (gameId === 'shape') {
+        while (isOn()) {
+          const v = b.me?.view;
+          if (v?.q) {
+            const r = await act(b, { type: 'answer', qid: v.q.id, choice: Math.floor(Math.random() * 4) });
+            if (r.ok) b.me = { ...b.me!, view: r.data };
+          }
+          await sleep(400 + (1 - b.skill) * 600);
+        }
+      } else if (gameId === 'cups') {
+        let lastIdx = -1;
+        while (isOn()) {
+          const g = st().game;
+          if (g && g.stepKind === 'question' && g.payload.index !== lastIdx) {
+            lastIdx = g.payload.index;
+            await sleep(200 + Math.random() * 1500);
+            await act(b, { type: 'answer', index: lastIdx, choice: Math.floor(Math.random() * g.payload.n) });
+          }
+          await sleep(100);
+        }
+      } else if (gameId === 'stop10') {
+        const g = st().game!;
+        const wait = 10_000 + (Math.random() - 0.5) * 3000 * (1 - b.skill) - (Date.now() - g.stepStartedAt);
+        await sleep(Math.max(0, wait));
+        const r = await act(b, { type: 'stop', elapsed: Date.now() - g.stepStartedAt });
+        if (bi === 0) {
+          const again = await act(b, { type: 'stop', elapsed: 10000 });
+          assert(r.ok && !again.ok, '[stop10] 두 번 누르기 차단');
+        }
+        if (bi === 1) void 0;
+      } else if (gameId === 'rhythm') {
+        const g = st().game!;
+        const beats: number[] = g.payload.beats;
+        let i = 0;
+        while (isOn() && i < beats.length) {
+          const el = Date.now() - g.stepStartedAt;
+          const due: number[] = [];
+          while (i < beats.length && beats[i] <= el) {
+            due.push(beats[i] + Math.round((Math.random() - 0.5) * 2 * (40 + (1 - b.skill) * 160)));
+            i++;
+          }
+          const times = bi === 2 ? [el + 5000] : due.sort((x, y) => x - y); // 봇3: 미래 시각 조작
+          if (times.length) await act(b, { type: 'taps', times });
+          await sleep(300);
+        }
       } else if (gameId === 'memory') {
         while (isOn()) {
           const r = await act(b, { type: 'next' });
@@ -193,6 +252,10 @@ async function main() {
     const t0 = Date.now();
     await play(gid);
     await waitPhase('CALCULATING');
+    if (gid === 'stop10') {
+      const took = Date.now() - t0;
+      assert(took < 14_000, `[stop10] 전원 STOP 시 조기 종료 (${Math.round(took / 1000)}초)`);
+    }
     if (['nonsense', 'chosung', 'ox'].includes(gid)) {
       const full = { nonsense: 3 * 14, chosung: 3 * 19, ox: 5 * 9.5 }[gid as 'ox']! * 1000;
       const took = Date.now() - t0;
@@ -209,6 +272,10 @@ async function main() {
     assert(rr.entries[0].rank === 1, `[${gid}] 1위 존재 (${rr.entries[0].nickname} ${rr.entries[0].score}점, ${rr.entries[0].metric})`);
     const sorted = rr.entries.every((e, i, a) => i === 0 || a[i - 1].score >= e.score);
     assert(sorted, `[${gid}] 점수 내림차순 정렬`);
+    if (gid === 'rhythm') {
+      const cheat = rr.entries.find((e) => e.nickname === '봇3')!;
+      assert(cheat.score === 0, `[rhythm] 미래 시각 터치 조작 무효 (${cheat.metric})`);
+    }
     if (gid === 'reaction') {
       const cheat = rr.entries.find((e) => e.nickname === '봇3')!;
       assert(!cheat.metric.includes(' 1ms'), `[reaction] 1ms 조작 차단 (${cheat.metric})`);

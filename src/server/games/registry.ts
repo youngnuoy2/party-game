@@ -4,7 +4,11 @@ import type { GameId } from '../../shared/types';
 import { memoryGame } from './memory';
 import { chosungGame, nonsenseGame, oxGame } from './quizGames';
 import { reactionGame } from './reaction';
-import { colorGame, compareGame, mathGame, orderGame, senseGame, typingGame } from './streamGames';
+import { colorGame, compareGame, mathGame, orderGame, senseGame, shapeGame, typingGame } from './streamGames';
+import { cupsGame } from './cups';
+import { rhythmGame } from './rhythm';
+import { stop10Game } from './stop10';
+import { targetGame } from './target';
 import { tapGame } from './tap';
 import type { GameModule } from './types';
 
@@ -21,4 +25,9 @@ export const GAMES: Record<GameId, GameModule> = {
   order: orderGame,
   typing: typingGame,
   sense: senseGame,
+  target: targetGame,
+  cups: cupsGame,
+  stop10: stop10Game,
+  shape: shapeGame,
+  rhythm: rhythmGame,
 };

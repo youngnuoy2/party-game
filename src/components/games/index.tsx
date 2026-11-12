@@ -7,6 +7,11 @@ import QuizGame from './QuizGame';
 import ReactionGame from './ReactionGame';
 import StreamGame from './StreamGame';
 import TapGame from './TapGame';
+import CupsGame from './CupsGame';
+import RhythmGame from './RhythmGame';
+import ShapeGame from './ShapeGame';
+import Stop10Game from './Stop10Game';
+import TargetGame from './TargetGame';
 
 export const PLAYER_GAMES: Record<GameId, ComponentType<GameProps>> = {
   tap: TapGame,
@@ -21,4 +26,9 @@ export const PLAYER_GAMES: Record<GameId, ComponentType<GameProps>> = {
   ox: QuizGame,
   reaction: ReactionGame,
   memory: MemoryGame,
+  target: TargetGame,
+  cups: CupsGame,
+  stop10: Stop10Game,
+  shape: ShapeGame,
+  rhythm: RhythmGame,
 };

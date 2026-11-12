@@ -24,7 +24,12 @@ export type GameId =
   | 'compare'
   | 'order'
   | 'typing'
-  | 'sense';
+  | 'sense'
+  | 'target'
+  | 'cups'
+  | 'stop10'
+  | 'shape'
+  | 'rhythm';
 
 export type MathDifficulty = 'easy' | 'normal' | 'hard';
 export type ChosungMode = 'choice' | 'input';
