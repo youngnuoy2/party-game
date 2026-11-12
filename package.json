@@ -1,4 +1,20 @@
 {
+  "name": "year-end-party-battle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "송년회 랜덤 미니게임 배틀 - QR 기반 실시간 멀티플레이어 미니게임",
+  "scripts": {
+    "dev": "tsx watch --ignore ./src/app --ignore ./src/components server.ts",
+    "build": "next build",
+    "start": "cross-env NODE_ENV=production tsx server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx scripts/verify-data.ts && tsx scripts/sim.ts",
+    "verify:data": "tsx scripts/verify-data.ts",
+    "sim": "tsx scripts/sim.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
     "cross-env": "^10.1.0",
