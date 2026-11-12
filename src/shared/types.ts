@@ -39,6 +39,8 @@ export interface RoomSettings {
   totalRounds: number;
   enabledGames: GameId[];
   allowLateJoin: boolean;
+  /** 연결이 끊긴 채 이 시간(초)이 지나면 자동 퇴장 (0 = 사용 안 함) */
+  autoKickSec: number;
   mathDifficulty: MathDifficulty;
   chosungMode: ChosungMode;
 }

@@ -47,6 +47,7 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
           return;
         }
         localStorage.removeItem(keyOf(code));
+        if (r.error) setError(r.error);
       }
       const info = await emitAck<{ title: string; playerCount: number; canJoin: boolean }>('room:check', { code });
       if (!info.ok) {

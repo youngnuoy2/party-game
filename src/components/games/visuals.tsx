@@ -108,7 +108,13 @@ export function CupsBoard({
           >
             {/* 공 */}
             {lifted && (
-              <div className={cx('absolute bottom-1 rounded-full bg-gradient-to-br from-yellow-200 to-amber-500 shadow-gold', big ? 'h-16 w-16' : 'h-8 w-8')} />
+              <div
+                className={cx('absolute bottom-1 z-10 rounded-full border-white', big ? 'h-20 w-20 border-[6px]' : 'h-10 w-10 border-[3px]')}
+                style={{
+                  background: 'radial-gradient(circle at 35% 30%, #ffffff 0 18%, #a3ff3c 22%, #39ff14 60%, #16a34a 100%)',
+                  boxShadow: '0 0 18px 6px rgba(57,255,20,.85), 0 0 50px rgba(57,255,20,.6)',
+                }}
+              />
             )}
             {/* 컵 */}
             <div

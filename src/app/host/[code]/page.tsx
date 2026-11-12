@@ -391,6 +391,15 @@ function SettingsPanel({ state, cmd }: { state: PublicState; cmd: Cmd }) {
           <input type="checkbox" checked={s.allowLateJoin} onChange={(e) => save({ allowLateJoin: e.target.checked })} className="h-5 w-5" />
           <span>게임 중간 참가 허용</span>
         </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="w-28 text-white/70">연결 끊김 자동 퇴장</span>
+          {[0, 10, 30, 60].map((n) => (
+            <button key={n} className={cx('chip', (s.autoKickSec ?? 10) === n && 'border-neon-blue bg-neon-blue/20')} onClick={() => save({ autoKickSec: n })}>
+              {n === 0 ? '사용 안 함' : `${n}초`}
+            </button>
+          ))}
+          <span className="text-xs text-white/40">빨간불(연결 끊김)이 이 시간 동안 계속되면 퇴장 · 점수도 사라짐</span>
+        </div>
       </div>
     </details>
   );

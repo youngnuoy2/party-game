@@ -73,6 +73,7 @@ const DEFAULT_SETTINGS: RoomSettings = {
   totalRounds: 8,
   enabledGames: [...ALL_GAME_IDS],
   allowLateJoin: true,
+  autoKickSec: 10,
   mathDifficulty: 'normal',
   chosungMode: 'input',
 };
@@ -89,6 +90,7 @@ export class RoomManager {
   private bcastTimers = new Map<string, NodeJS.Timeout>();
   private liveTimer: NodeJS.Timeout | null = null;
   private online = new Map<string, number>(); // playerId → 연결된 소켓 수
+  private kickTimers = new Map<string, NodeJS.Timeout>(); // 연결 끊김 자동 퇴장 타이머
 
   constructor(dataDir: string) {
     this.dataDir = path.join(dataDir, 'rooms');
@@ -231,7 +233,7 @@ export class RoomManager {
   }
 
   resume(room: Room, playerId: string, tok: string): Ack {
-    if (room.kicked.includes(playerId)) return { ok: false, error: '퇴장 처리된 참가자입니다' };
+    if (room.kicked.includes(playerId)) return { ok: false, error: '퇴장 처리되었어요. 새 닉네임으로 다시 입장해 주세요' };
     const p = room.players[playerId];
     if (!p || !safeEqual(p.token, tok)) return { ok: false, error: '참가 정보가 없습니다. 다시 입장해 주세요' };
     return { ok: true };
@@ -240,17 +242,42 @@ export class RoomManager {
   setOnline(room: Room, playerId: string, delta: 1 | -1) {
     const n = Math.max(0, (this.online.get(playerId) ?? 0) + delta);
     this.online.set(playerId, n);
+    if (n > 0) this.clearKickTimer(playerId);
+    else if (delta === -1) this.armKickTimer(room, playerId);
     const p = room.players[playerId];
     if (p) p.lastSeen = Date.now();
     if (delta === -1) this.checkAllDone(room); // 미제출자가 나가면 남은 전원이 제출했는지 다시 확인
     this.broadcast(room);
   }
 
+  /** 연결이 끊긴 상태(빨간불)가 설정 시간 동안 계속되면 자동 퇴장 */
+  private armKickTimer(room: Room, playerId: string) {
+    const sec = room.settings.autoKickSec ?? 10;
+    if (!sec || !room.players[playerId]) return;
+    this.clearKickTimer(playerId);
+    this.kickTimers.set(
+      playerId,
+      setTimeout(() => {
+        this.kickTimers.delete(playerId);
+        if (this.rooms.get(room.code) === room && room.players[playerId] && !this.isOnline(playerId)) {
+          console.log(`[auto-kick] ${room.code} ${room.players[playerId].nickname} (연결 끊김 ${sec}초)`);
+          this.kick(room, playerId, `연결이 ${sec}초 이상 끊겨 퇴장 처리되었습니다`);
+        }
+      }, sec * 1000),
+    );
+  }
+
+  private clearKickTimer(playerId: string) {
+    const t = this.kickTimers.get(playerId);
+    if (t) clearTimeout(t);
+    this.kickTimers.delete(playerId);
+  }
+
   isOnline(playerId: string) {
     return (this.online.get(playerId) ?? 0) > 0;
   }
 
-  kick(room: Room, playerId: string): Ack {
+  kick(room: Room, playerId: string, reason = '사회자에 의해 퇴장되었습니다'): Ack {
     const p = room.players[playerId];
     if (!p) return { ok: false, error: '참가자가 없습니다' };
     delete room.players[playerId];
@@ -260,7 +287,8 @@ export class RoomManager {
       delete room.round.players[playerId];
     }
     if (room.pending) room.pending = room.pending.filter((x) => x.playerId !== playerId);
-    this.io.to(`p:${playerId}`).emit('kicked', { reason: '사회자에 의해 퇴장되었습니다' });
+    this.clearKickTimer(playerId);
+    this.io.to(`p:${playerId}`).emit('kicked', { reason });
     this.io.in(`p:${playerId}`).socketsLeave([`room:${room.code}`, `p:${playerId}`]);
     this.recomputeRanking(room, false);
     this.commit(room);
@@ -294,6 +322,11 @@ export class RoomManager {
       next.enabledGames = [...new Set(list)];
     }
     if (typeof s.allowLateJoin === 'boolean') next.allowLateJoin = s.allowLateJoin;
+    if (s.autoKickSec !== undefined) {
+      const n = Math.floor(Number(s.autoKickSec));
+      if (!Number.isFinite(n) || n < 0 || n > 600) return { ok: false, error: '자동 퇴장 시간은 0~600초' };
+      next.autoKickSec = n;
+    }
     if (s.mathDifficulty && ['easy', 'normal', 'hard'].includes(s.mathDifficulty)) next.mathDifficulty = s.mathDifficulty;
     if (s.chosungMode && ['choice', 'input'].includes(s.chosungMode)) next.chosungMode = s.chosungMode;
     room.settings = next;
