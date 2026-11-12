@@ -8,7 +8,9 @@ import { registerSocket } from './src/server/socket';
 
 const dev = process.env.NODE_ENV !== 'production';
 const port = Number(process.env.PORT || 3000);
-const host = process.env.HOST || '0.0.0.0';
+// HOST 미지정 시 IPv4(127.0.0.1, 192.168.x.x)와 IPv6(::1) 모두에서 접속을 받음
+// (윈도우에서 cloudflared 가 localhost 를 ::1 로 접속하는 경우 대비)
+const host = process.env.HOST;
 
 function lanAddresses() {
   return Object.values(os.networkInterfaces())
@@ -18,7 +20,7 @@ function lanAddresses() {
 }
 
 async function main() {
-  const app = next({ dev, hostname: host, port });
+  const app = next({ dev, hostname: host || 'localhost', port });
   const handle = app.getRequestHandler();
   await app.prepare();
 
@@ -54,12 +56,14 @@ async function main() {
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 
-  httpServer.listen(port, host, () => {
+  const onListen = () => {
     console.log(`\n🎉 송년회 미니게임 배틀 서버 실행 중 (${dev ? '개발' : '운영'} 모드)`);
     console.log(`   로컬:   http://localhost:${port}`);
     for (const a of lanAddresses()) console.log(`   같은 Wi-Fi: ${a}`);
     console.log(`   관리자: http://localhost:${port}/host\n`);
-  });
+  };
+  if (host) httpServer.listen(port, host, onListen);
+  else httpServer.listen(port, onListen); // 듀얼 스택 (:: + 0.0.0.0)
 }
 
 main().catch((e) => {
