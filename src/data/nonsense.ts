@@ -1,0 +1,43 @@
+// 넌센스 퀴즈 문제 은행
+// - choices[0] 이 정답입니다. (출제 시 서버에서 무작위로 섞습니다)
+// - 널리 알려진 넌센스 문제만 수록했고, 정답은 사람이 검증한 고정 데이터입니다.
+import type { ChoiceQuestion } from './types';
+
+export const NONSENSE: ChoiceQuestion[] = [
+  { id: 'ns01', q: '세상에서 가장 쉬운 숫자는?', choices: ['190,000', '1', '0', '100'], explain: '십구만 → "쉽구만"', difficulty: 1, category: '숫자' },
+  { id: 'ns02', q: '왕이 넘어지면?', choices: ['킹콩', '킹크랩', '왕창', '킹덤'], explain: 'King + 꽈당 "콩"', difficulty: 1, category: '말장난' },
+  { id: 'ns03', q: '세상에서 가장 가난한 왕은?', choices: ['최저임금', '거지왕', '빈털터리왕', '알뜰왕'], explain: '임금(왕) 중 최저 → 최저임금', difficulty: 2, category: '말장난' },
+  { id: 'ns04', q: '바나나가 웃으면?', choices: ['바나나킥', '바나나우유', '바나나칩', '바나나보트'], explain: '바나나가 "킥킥" 웃어서', difficulty: 1, category: '음식' },
+  { id: 'ns05', q: '물고기의 반대말은?', choices: ['불고기', '산고기', '뭍고기', '날고기'], explain: '물 ↔ 불', difficulty: 1, category: '음식' },
+  { id: 'ns06', q: '미국에서 비가 내리면?', choices: ['USB', '아메리카노', '레인보우', '빅맥'], explain: 'US + 비 = USB', difficulty: 1, category: '영어' },
+  { id: 'ns07', q: '차가 놀라면?', choices: ['카놀라유', '빵빵', '카센터', '차차차'], explain: 'Car + 놀라 + 유', difficulty: 2, category: '영어' },
+  { id: 'ns08', q: '아몬드가 죽으면?', choices: ['다이아몬드', '아몬드봉봉', '구운 아몬드', '땅콩'], explain: 'Die + 아몬드', difficulty: 1, category: '영어' },
+  { id: 'ns09', q: '오리가 얼면?', choices: ['언덕', '빙어', '오리털', '얼음오리'], explain: '언(얼은) + Duck(오리)', difficulty: 2, category: '영어' },
+  { id: 'ns10', q: '개가 사람을 가르치면?', choices: ['개인지도', '개판', '개과천선', '개학'], explain: '개 + 人 + 지도', difficulty: 2, category: '말장난' },
+  { id: 'ns11', q: '세상에서 가장 빠른 닭은?', choices: ['후다닥', '치킨', '통닭', '닭발'], explain: '후다"닥"', difficulty: 1, category: '동물' },
+  { id: 'ns12', q: '깨가 죽으면?', choices: ['주근깨', '참깨', '들깨', '깨소금'], explain: '죽은 깨 → 주근깨', difficulty: 1, category: '말장난' },
+  { id: 'ns13', q: '전화로 세운 건물은?', choices: ['콜로세움', '전화국', '피라미드', '에펠탑'], explain: 'Call로 세움', difficulty: 2, category: '영어' },
+  { id: 'ns14', q: '자동차를 톡 치면?', choices: ['카톡', '빵빵', '톡톡', '자동차 보험'], explain: 'Car + 톡', difficulty: 1, category: '영어' },
+  { id: 'ns15', q: '할아버지가 가장 좋아하는 돈은?', choices: ['할머니', '용돈', '세뱃돈', '쌈짓돈'], explain: '할 + Money(머니) → 할머니', difficulty: 2, category: '가족' },
+  { id: 'ns16', q: '소금의 유통기한은?', choices: ['천일', '백일', '평생', '1년'], explain: '천일염', difficulty: 2, category: '음식' },
+  { id: 'ns17', q: '왕이 궁에 들어가기 싫을 때 내는 소리는?', choices: ['궁시렁궁시렁', '싫어싫어', '에헴', '왕왕'], explain: '궁 + 싫어 → 궁시렁', difficulty: 2, category: '말장난' },
+  { id: 'ns18', q: '우유가 아프면?', choices: ['앙팡', '요구르트', '치즈', '우유병'], explain: '아파서 "앙~" 우는 우유 → 앙팡', difficulty: 2, category: '음식' },
+  { id: 'ns19', q: '딸기가 직장을 잃으면?', choices: ['딸기시럽', '딸기잼', '딸기우유', '산딸기'], explain: '실업 → 시럽', difficulty: 1, category: '음식' },
+  { id: 'ns20', q: '세상에서 가장 착한 사자는?', choices: ['자원봉사자', '라이온킹', '흰사자', '아기사자'], explain: '자원봉사"자"', difficulty: 1, category: '동물' },
+  { id: 'ns21', q: '세상에서 가장 지루한 중학교는?', choices: ['로딩중', '심심중', '하품중', '졸음중'], explain: '로딩"중"', difficulty: 1, category: '말장난' },
+  { id: 'ns22', q: '세상에서 가장 비싼 새는?', choices: ['백조', '황금새', '공작새', '독수리'], explain: '100조', difficulty: 1, category: '동물' },
+  { id: 'ns23', q: '세상에서 가장 큰 코는?', choices: ['멕시코', '코끼리 코', '피노키오 코', '들창코'], explain: '멕시"코"', difficulty: 1, category: '나라' },
+  { id: 'ns24', q: '진짜 문제투성이인 것은?', choices: ['시험지', '숙제', '회사', '수학책'], explain: '시험지는 문제로 가득!', difficulty: 1, category: '학교' },
+  { id: 'ns25', q: '세상에서 가장 억울한 도형은?', choices: ['원통', '삼각형', '사다리꼴', '마름모'], explain: '원통하다', difficulty: 1, category: '말장난' },
+  { id: 'ns26', q: '개 중에 가장 아름다운 개는?', choices: ['무지개', '진돗개', '푸들', '안개'], explain: '무지"개"', difficulty: 1, category: '말장난' },
+  { id: 'ns27', q: '소가 노래를 부르면?', choices: ['소송', '음메송', '우유송', '소나타'], explain: '소 + Song', difficulty: 1, category: '영어' },
+  { id: 'ns28', q: '사람의 몸무게가 가장 많이 나갈 때는?', choices: ['철들 때', '밥 먹을 때', '송년회 때', '살찔 때'], explain: '철(鐵)이 들어서', difficulty: 2, category: '말장난' },
+  { id: 'ns29', q: '먹으면 먹을수록 손해인데 안 먹을 수 없는 것은?', choices: ['나이', '욕', '밥', '술'], explain: '나이는 누구나 먹는다', difficulty: 1, category: '인생' },
+  { id: 'ns30', q: '이상한 사람들이 가는 병원은?', choices: ['치과', '안과', '이비인후과', '피부과'], explain: '이(齒)가 상한 사람 → 이상한 사람', difficulty: 1, category: '말장난' },
+  { id: 'ns31', q: '도둑이 가장 좋아하는 아이스크림은?', choices: ['보석바', '누가바', '죠스바', '돼지바'], explain: '보석을 좋아하니까', difficulty: 1, category: '음식' },
+  { id: 'ns32', q: '칼이 정색하면?', choices: ['검정색', '빨간색', '칼국수', '칼슘'], explain: '검(劍) + 정색', difficulty: 2, category: '말장난' },
+  { id: 'ns33', q: '반성문을 영어로 하면?', choices: ['글로벌', 'Sorry', '리포트', '레터'], explain: '글로 벌 받으니까', difficulty: 2, category: '영어' },
+  { id: 'ns34', q: '세상에서 가장 추운 바다는?', choices: ['썰렁해', '북극해', '남극해', '동해'], explain: '썰렁"해"', difficulty: 1, category: '말장난' },
+  { id: 'ns35', q: '세상에서 가장 뜨거운 바다는?', choices: ['열바다', '홍해', '지중해', '열대해'], explain: '열받아', difficulty: 1, category: '말장난' },
+  { id: 'ns36', q: '세상에서 가장 야한 채소는?', choices: ['버섯', '오이', '가지', '당근'], explain: '벗었…→ 버섯', difficulty: 2, category: '음식' },
+];
