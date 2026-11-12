@@ -30,7 +30,7 @@ src/server/room.ts            상태 머신, 점수 계산, 순위, 영속화, �
 src/server/socket.ts          이벤트 라우팅, 관리자 인증, 레이트리밋
 src/server/games/*.ts         게임별 서버 로직 (공통 GameModule 인터페이스)
 src/server/questionBank.ts    내장 문제 + 사용자 추가 문제(JSON)
-src/data/*.ts                 넌센스 36 / 초성 38 / OX 34 문제 (정답·해설·난이도·카테고리)
+src/data/*.ts                 넌센스 36 / 초성 38 / OX 34 문제 (정답·해설·난이도·카테고리) + 타자 문장 30개
 src/components/games/*.tsx    게임별 참가자 화면
 src/app/{join,host,screen}    참가자 / 사회자 / 대형 스크린 페이지
 scripts/sim.ts                봇 30명으로 전 게임을 돌리는 통합 테스트
@@ -68,7 +68,9 @@ scripts/verify-data.ts        문제 데이터 검증 (중복, 초성 모호성,
 |---|---|
 | 👆 연타왕 (10초) | 터치 수 ÷ 1등 터치 수 × 1000 |
 | 🧮 사칙연산 (30초) | 정답 100 + 속도 보너스(최대 50) − 오답 30 → 1등 대비 환산 |
-| 🎨 색깔 함정 / ⚖️ 숫자 비교 (20초) | 사칙연산과 같음 |
+| 🎨 색깔 함정 / ⚖️ 숫자 비교 / 🎯 숫자 감각 (20초) | 사칙연산과 같음 |
+| 🔢 순서 맞추기 (25초) | 4개를 작은 순서대로 모두 맞히면 정답, 점수 방식은 사칙연산과 같음 (보너스 기준 8초) |
+| ⌨️ 빠른 타자 (30초) | 문장 일치(띄어쓰기 무관, 붙여넣기 차단), 점수 방식은 사칙연산과 같음 (보너스 기준 12초) |
 | 🤣 넌센스 (3문제×10초) / 🔤 초성 (3문제×15초) / 🙆 OX (5문제×6초) | 문제당 (1000/문제수) × (정답 60% + 남은 시간 비율 40%) |
 | ⚡ 반응속도 (3회) | 평균 ms (반칙·미응답은 1000ms) → 1등 평균 ÷ 내 평균 × 1000 |
 | 🧠 숫자 기억 (60초) | 최대 자릿수 + 평균 입력 속도 가산(1자리 미만) → 1등 대비 환산 |
@@ -85,7 +87,7 @@ scripts/verify-data.ts        문제 데이터 검증 (중복, 초성 모호성,
 2. `src/server/games/registry.ts`에 등록하고, `src/shared/gameMeta.ts`에 이름·색상·설명을 추가합니다.
 3. `src/components/games/index.tsx`에 참가자 화면 컴포넌트를 연결합니다.
 
-"개인별 연속 문제" 형식은 `makeStreamGame({gen})`, "동시 퀴즈" 형식은 `makeQuizGame({build})`로 몇십 줄이면 만들 수 있습니다. "숫자 크기 비교"가 이 방식으로 추가한 예시입니다. 순서 맞추기, 빠른 타자, 숫자 감각 게임도 같은 방법으로 추가할 수 있습니다.
+"개인별 연속 문제" 형식은 `makeStreamGame({gen, check})`, "동시 퀴즈" 형식은 `makeQuizGame({build})`로 몇십 줄이면 만들 수 있습니다. 숫자 크기 비교, 순서 맞추기, 빠른 타자, 숫자 감각이 이 방식으로 추가한 확장 게임입니다(`src/server/games/streamGames.ts`).
 
 ---
 
@@ -94,7 +96,6 @@ scripts/verify-data.ts        문제 데이터 검증 (중복, 초성 모호성,
 Node.js 20 이상이 필요합니다.
 
 ```bash
-cd party-game
 npm install
 cp .env.example .env        # ADMIN_PASSWORD 변경
 npm run build
@@ -117,7 +118,7 @@ ADMIN_PASSWORD=비밀번호 npm start      # http://localhost:3000
 ## 3. 테스트
 ```bash
 npm run verify:data   # 문제 데이터 검증
-npm run sim           # 봇 30명 × 9개 게임 통합 시뮬레이션 (약 5분, BOTS=100 으로 부하 테스트)
+npm run sim           # 봇 30명 × 12개 게임 통합 시뮬레이션 (약 5분, BOTS=100 으로 부하 테스트)
 npm run typecheck
 ```
 시뮬레이션이 검증하는 항목: 비밀번호·토큰 위조 거부, 닉네임 중복, 재접속, 참가자의 관리자 명령 거부, 정답 정보 비노출, 중복 제출과 마감 후 제출 차단, 반응속도 조작 차단, 점수 범위와 정렬, 결과 중복 반영 차단, 라운드 수 제한, 디스크 저장과의 일치.

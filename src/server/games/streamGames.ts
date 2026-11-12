@@ -1,3 +1,4 @@
+import { TYPING_PHRASES } from '../../data/typing';
 import type { MathDifficulty } from '../../shared/types';
 import { pick, rand, shuffle } from '../util';
 import { makeStreamGame, type StreamQuestion } from './streamGame';
@@ -128,5 +129,85 @@ export const compareGame = makeStreamGame({
     }
     if (l.value === r.value) r = { text: String(r.value + 1), value: r.value + 1 };
     return { pub: { choices: [l.text, r.text] }, answer: l.value > r.value ? 0 : 1 };
+  },
+});
+
+// ───────────────────────── 순서 맞추기 (확장 게임) ─────────────────────────
+// 4개의 수(식)를 작은 순서대로 터치. choice 는 "2013" 같은 인덱스 순서 문자열
+export const orderGame = makeStreamGame({
+  id: 'order',
+  durationMs: 25_000,
+  wrongLockMs: 800,
+  bonusSec: 8,
+  gen(settings): StreamQuestion {
+    const items: { text: string; value: number }[] = [];
+    let guard = 0;
+    while (items.length < 4 && guard++ < 200) {
+      const it = compareSide(settings.mathDifficulty);
+      if (!items.some((x) => x.value === it.value)) items.push(it);
+    }
+    const order = items
+      .map((x, i) => ({ i, v: x.value }))
+      .sort((a, b) => a.v - b.v)
+      .map((x) => x.i)
+      .join('');
+    return { pub: { choices: items.map((x) => x.text) }, answer: order };
+  },
+  check: (answer, raw) => typeof raw === 'string' && raw === answer,
+});
+
+// ───────────────────────── 빠른 타자 (확장 게임) ─────────────────────────
+
+const typingNorm = (s: string) => s.normalize('NFC').replace(/\s+/g, ' ').trim().replace(/\s/g, '');
+export const typingGame = makeStreamGame({
+  id: 'typing',
+  durationMs: 30_000,
+  wrongLockMs: 600,
+  bonusSec: 12,
+  gen(): StreamQuestion {
+    const t = pick(TYPING_PHRASES);
+    return { pub: { text: t, choices: [] }, answer: t };
+  },
+  check: (answer, raw) => typeof raw === 'string' && raw.length <= 60 && typingNorm(raw) === typingNorm(String(answer)),
+});
+
+// ───────────────────────── 숫자 감각 (확장 게임) ─────────────────────────
+// 어림셈: 정답과 가장 가까운 보기 고르기 (보기 간격을 넓게 해 애매함 제거)
+export const senseGame = makeStreamGame({
+  id: 'sense',
+  durationMs: 20_000,
+  wrongLockMs: 800,
+  gen(settings): StreamQuestion {
+    const hard = settings.mathDifficulty === 'hard';
+    const kind = rand(0, 2);
+    let text: string;
+    let value: number;
+    if (kind === 0) {
+      const a = rand(hard ? 1000 : 100, hard ? 9999 : 999);
+      const b = rand(hard ? 1000 : 100, hard ? 9999 : 999);
+      text = `${a} + ${b}`;
+      value = a + b;
+    } else if (kind === 1) {
+      const a = rand(11, hard ? 99 : 49);
+      const b = rand(11, hard ? 99 : 49);
+      text = `${a} × ${b}`;
+      value = a * b;
+    } else {
+      const a = rand(hard ? 5000 : 500, hard ? 9999 : 999);
+      const b = rand(hard ? 1000 : 100, a - 1);
+      text = `${a} − ${b}`;
+      value = a - b;
+    }
+    // 보기: 정답 근처 반올림값 1개 + 정답과 30% 이상 떨어진 오답 3개
+    const mag = Math.pow(10, Math.max(1, Math.floor(Math.log10(Math.max(10, value))) - 1));
+    const near = Math.round(value / mag) * mag;
+    const opts = new Set<number>([near]);
+    for (const f of shuffle([0.5, 0.6, 1.5, 1.7, 2, 0.4])) {
+      if (opts.size >= 4) break;
+      const v = Math.round((value * f) / mag) * mag;
+      if (v > 0 && Math.abs(v - value) >= value * 0.3) opts.add(v);
+    }
+    const choices = shuffle([...opts]);
+    return { pub: { text: `${text} ≈ ?`, choices: choices.map((c) => c.toLocaleString('ko-KR')) }, answer: choices.indexOf(near) };
   },
 });

@@ -7,17 +7,17 @@ import type { GameModule, Round } from './types';
 
 export interface StreamQuestion {
   pub: Record<string, unknown>; // 클라이언트로 전송할 문제 (정답 제외)
-  answer: number; // 정답 보기 인덱스
+  answer: number | string; // 정답 (보기 인덱스, 순서 문자열, 입력 문장 등)
 }
 
 interface PState {
   seq: number;
-  cur: { id: number; pub: Record<string, unknown>; answer: number; issuedAt: number } | null;
+  cur: { id: number; pub: Record<string, unknown>; answer: number | string; issuedAt: number } | null;
   correct: number;
   wrong: number;
   points: number;
   lockedUntil: number;
-  last: { correct: boolean; answer: number; chosen: number; gain: number } | null;
+  last: { correct: boolean; gain: number } | null;
   streak: number;
 }
 
@@ -26,6 +26,10 @@ interface Opts {
   durationMs: number;
   wrongLockMs: number;
   gen(settings: RoomSettings): StreamQuestion;
+  /** 정답 판정 (기본: 보기 인덱스 일치) */
+  check?(answer: number | string, raw: unknown): boolean;
+  /** 이 시간(초) 안에 맞히면 속도 보너스 (기본 6초) */
+  bonusSec?: number;
 }
 
 const CORRECT_BASE = 100;
@@ -78,12 +82,12 @@ export function makeStreamGame(o: Opts): GameModule<{ settings: RoomSettings }, 
       if (action?.type !== 'answer') return { ok: false, error: 'bad action' };
       if (!p.cur || action.qid !== p.cur.id) return { ok: false, error: '이미 처리된 문제입니다' };
       if (env.now < p.lockedUntil - 100) return { ok: false, error: '잠시 대기' };
-      const choice = Number(action.choice);
-      const isCorrect = choice === p.cur.answer;
+      const isCorrect = o.check ? o.check(p.cur.answer, action.choice) : Number(action.choice) === p.cur.answer;
       let gain: number;
       if (isCorrect) {
         const sec = (env.now - Math.max(p.cur.issuedAt, p.lockedUntil)) / 1000;
-        const bonus = Math.round(SPEED_BONUS_MAX * clamp((6 - sec) / 5, 0, 1));
+        const win = o.bonusSec ?? 6;
+        const bonus = Math.round(SPEED_BONUS_MAX * clamp((win - sec) / (win - 1), 0, 1));
         gain = CORRECT_BASE + bonus;
         p.correct += 1;
         p.streak += 1;
@@ -94,7 +98,7 @@ export function makeStreamGame(o: Opts): GameModule<{ settings: RoomSettings }, 
         p.lockedUntil = env.now + o.wrongLockMs;
       }
       p.points += gain;
-      p.last = { correct: isCorrect, answer: p.cur.answer, chosen: choice, gain };
+      p.last = { correct: isCorrect, gain };
       issue(round, p, env.now);
       return { ok: true, data: mod.playerView(round, pid, env.now) };
     },

@@ -4,7 +4,7 @@ import type { GameId } from '../../shared/types';
 import { memoryGame } from './memory';
 import { chosungGame, nonsenseGame, oxGame } from './quizGames';
 import { reactionGame } from './reaction';
-import { colorGame, compareGame, mathGame } from './streamGames';
+import { colorGame, compareGame, mathGame, orderGame, senseGame, typingGame } from './streamGames';
 import { tapGame } from './tap';
 import type { GameModule } from './types';
 
@@ -18,4 +18,7 @@ export const GAMES: Record<GameId, GameModule> = {
   color: colorGame,
   memory: memoryGame,
   compare: compareGame,
+  order: orderGame,
+  typing: typingGame,
+  sense: senseGame,
 };

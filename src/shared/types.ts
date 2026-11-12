@@ -21,7 +21,10 @@ export type GameId =
   | 'ox'
   | 'color'
   | 'memory'
-  | 'compare';
+  | 'compare'
+  | 'order'
+  | 'typing'
+  | 'sense';
 
 export type MathDifficulty = 'easy' | 'normal' | 'hard';
 export type ChosungMode = 'choice' | 'input';

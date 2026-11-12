@@ -103,12 +103,18 @@ async function main() {
           await act(b, { type: 'tap', count: c });
           await sleep(300);
         }
-      } else if (gameId === 'math' || gameId === 'color' || gameId === 'compare') {
+      } else if (['math', 'color', 'compare', 'sense', 'order', 'typing'].includes(gameId)) {
         while (isOn()) {
           const v = b.me?.view;
           if (v?.q) {
             const n = v.q.choices.length;
-            const r = await act(b, { type: 'answer', qid: v.q.id, choice: Math.floor(Math.random() * n) });
+            const choice =
+              gameId === 'typing'
+                ? Math.random() < b.skill ? ` ${v.q.text}  ` : '오타'
+                : gameId === 'order'
+                  ? [0, 1, 2, 3].sort(() => Math.random() - 0.5).join('')
+                  : Math.floor(Math.random() * n);
+            const r = await act(b, { type: 'answer', qid: v.q.id, choice });
             if (r.ok) b.me = { ...b.me!, view: r.data };
           }
           await sleep(250 + (1 - b.skill) * 600);

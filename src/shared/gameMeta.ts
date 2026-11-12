@@ -103,6 +103,36 @@ export const GAME_META: Record<GameId, GameMeta> = {
     scoring: '정답 100점 + 속도 보너스 − 오답 30점 → 1등 대비 환산',
     approxSeconds: 20,
   },
+  order: {
+    id: 'order',
+    name: '순서 맞추기',
+    emoji: '🔢',
+    color: ['#14b8a6', '#3b82f6'],
+    short: '작은 수부터 차례대로 터치!',
+    howTo: ['4개의 수(식)가 나와요', '가장 작은 것부터 순서대로 터치', '틀리면 감점 + 0.8초 대기'],
+    scoring: '정답 100점 + 속도 보너스 − 오답 30점 → 1등 대비 환산',
+    approxSeconds: 25,
+  },
+  typing: {
+    id: 'typing',
+    name: '빠른 타자',
+    emoji: '⌨️',
+    color: ['#0ea5e9', '#a855f7'],
+    short: '제시된 문장을 똑같이 빠르게 입력!',
+    howTo: ['화면의 문장을 그대로 입력', '맞히면 다음 문장', '오타는 감점 (띄어쓰기 개수는 무관)'],
+    scoring: '정답 100점 + 속도 보너스 − 오답 30점 → 1등 대비 환산',
+    approxSeconds: 30,
+  },
+  sense: {
+    id: 'sense',
+    name: '숫자 감각',
+    emoji: '🎯',
+    color: ['#f97316', '#eab308'],
+    short: '정확히 계산 말고, 감으로 가장 가까운 값!',
+    howTo: ['계산식의 결과와 가장 가까운 보기를 터치', '어림셈으로 빠르게!', '틀리면 감점 + 0.8초 대기'],
+    scoring: '정답 100점 + 속도 보너스 − 오답 30점 → 1등 대비 환산',
+    approxSeconds: 20,
+  },
 };
 
 export const ALL_GAME_IDS = Object.keys(GAME_META) as GameId[];
