@@ -155,6 +155,10 @@ export function makeQuizGame(o: Opts): GameModule<QuizData, PState> {
       if (!c) return 0;
       return Object.values(round.players).filter((p) => p.answers[c.idx]).length;
     },
+    isDone(round, pid) {
+      const c = curQ(round);
+      return !!c && c.step.kind === 'question' && !!round.players[pid]?.answers[c.idx];
+    },
     liveBoard() {
       return [];
     },

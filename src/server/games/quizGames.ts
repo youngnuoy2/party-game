@@ -30,7 +30,8 @@ export const chosungGame = makeQuizGame({
   revealMs: 4_000,
   build(ctx) {
     const bank = getBank().chosung;
-    const inputMode = ctx.settings.chosungMode === 'input';
+    // 초성 퀴즈는 항상 주관식(직접 입력). 띄어쓰기 무시 + 허용 표현(aliases) 인정
+    const inputMode = true;
     return ctx.takeQuestions('chosung', bank, 3).map((item): QuizQ => {
       let choices: string[] | null = null;
       let correctIndex = 0;

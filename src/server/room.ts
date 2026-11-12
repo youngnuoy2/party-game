@@ -24,6 +24,7 @@ import { clamp, newId, roomCode, safeEqual, shuffle, token } from './util';
 export const COUNTDOWN_MS = 3000;
 const COUNTDOWN_LEAD_MS = 400; // 메시지 전파 여유 (모든 기기가 같은 시각에 3-2-1 시작)
 const MAX_PLAYERS = 150;
+const EARLY_ADVANCE_MS = 800; // 전원 제출 후 정답 공개까지 잠깐 뜸 들이기
 
 export interface Player {
   id: string;
@@ -73,7 +74,7 @@ const DEFAULT_SETTINGS: RoomSettings = {
   enabledGames: [...ALL_GAME_IDS],
   allowLateJoin: true,
   mathDifficulty: 'normal',
-  chosungMode: 'choice',
+  chosungMode: 'input',
 };
 
 const NICK_RE = /^[^\u0000-\u001f<>]{1,12}$/;
@@ -241,6 +242,7 @@ export class RoomManager {
     this.online.set(playerId, n);
     const p = room.players[playerId];
     if (p) p.lastSeen = Date.now();
+    if (delta === -1) this.checkAllDone(room); // 미제출자가 나가면 남은 전원이 제출했는지 다시 확인
     this.broadcast(room);
   }
 
@@ -684,8 +686,31 @@ export class RoomManager {
     if (!r.participants.includes(playerId)) return { ok: false, error: '다음 라운드부터 참여할 수 있어요' };
     if (room.paused) return { ok: false, error: '일시정지 중입니다' };
     const res = GAMES[r.gameId].onAction(r, playerId, action, this.envFor(room));
-    if (res.ok) this.save(room);
+    if (res.ok) {
+      this.save(room);
+      this.checkAllDone(room);
+    }
     return res;
+  }
+
+  /**
+   * 접속 중인 참가자가 모두 답을 제출하면 남은 시간을 기다리지 않고 정답 공개로 넘어감.
+   * (연결이 끊긴 참가자는 기다리지 않음. 최소 1명은 제출해야 함)
+   */
+  private checkAllDone(room: Room) {
+    const r = room.round;
+    if (!r || room.phase !== 'PLAYING' || room.paused) return;
+    const mod = GAMES[r.gameId];
+    const step = r.steps[r.stepIndex];
+    if (!mod.isDone || !step || step.kind !== 'question') return;
+    const active = r.participants.filter((pid) => room.players[pid] && this.isOnline(pid));
+    if (!active.length || !active.every((pid) => mod.isDone!(r, pid))) return;
+    const at = Date.now() + EARLY_ADVANCE_MS;
+    if (room.timerAt !== null && room.timerAt <= at) return; // 이미 곧 넘어감
+    r.stepEndsAt = Math.min(r.stepEndsAt, at);
+    room.phaseEndsAt = at + r.steps.slice(r.stepIndex + 1).reduce((sum, x) => sum + x.durationMs, 0);
+    this.setTimer(room, at, 'stepEnd');
+    this.broadcast(room);
   }
 
   // ─────────────── 직렬화 / 브로드캐스트 ───────────────

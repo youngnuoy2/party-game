@@ -62,6 +62,8 @@ export interface GameModule<D = any, P = any> {
   playerView(round: Round<D, P>, playerId: string, now: number): unknown;
   onAction(round: Round<D, P>, playerId: string, action: any, env: ActionEnv): ActionResult;
   submittedCount(round: Round<D, P>): number;
+  /** 현재 단계에서 이 참가자가 할 일을 마쳤는지 (전원 완료 시 조기 진행에 사용, 퀴즈형만 구현) */
+  isDone?(round: Round<D, P>, playerId: string): boolean;
   liveBoard?(round: Round<D, P>, nick: (id: string) => string): LiveBoardRow[];
   finalize(round: Round<D, P>): Record<string, FinalEntry>;
 }

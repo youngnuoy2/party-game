@@ -387,15 +387,6 @@ function SettingsPanel({ state, cmd }: { state: PublicState; cmd: Cmd }) {
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="w-28 text-white/70">초성 퀴즈 방식</span>
-          <button className={cx('chip', s.chosungMode === 'choice' && 'border-neon-blue bg-neon-blue/20')} onClick={() => save({ chosungMode: 'choice' })}>
-            4지선다
-          </button>
-          <button className={cx('chip', s.chosungMode === 'input' && 'border-neon-blue bg-neon-blue/20')} onClick={() => save({ chosungMode: 'input' })}>
-            직접 입력
-          </button>
-        </div>
         <label className="flex items-center gap-2">
           <input type="checkbox" checked={s.allowLateJoin} onChange={(e) => save({ allowLateJoin: e.target.checked })} className="h-5 w-5" />
           <span>게임 중간 참가 허용</span>

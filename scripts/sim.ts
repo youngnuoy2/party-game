@@ -10,6 +10,8 @@ import { ALL_GAME_IDS } from '../src/shared/gameMeta';
 import type { Ack, MeState, PublicState } from '../src/shared/types';
 
 const BOTS = Number(process.env.BOTS || 30);
+// SIM_GAMES=nonsense,chosung,ox 처럼 일부 게임만 테스트 가능
+const GAME_IDS = (process.env.SIM_GAMES ? process.env.SIM_GAMES.split(',') : ALL_GAME_IDS) as typeof ALL_GAME_IDS;
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'party-sim-'));
 process.env.DATA_DIR = tmp;
 process.env.ADMIN_PASSWORD = 'test-pw';
@@ -88,7 +90,7 @@ async function main() {
   const notHost = await emit(bots[1].s, 'host:cmd', { cmd: 'nextGame' });
   assert(!notHost.ok, '참가자의 관리자 명령 거부');
 
-  await cmd('settings', { settings: { totalRounds: ALL_GAME_IDS.length, chosungMode: 'choice' } });
+  await cmd('settings', { settings: { totalRounds: GAME_IDS.length, enabledGames: GAME_IDS } });
 
   // ───── 봇 플레이 로직 ─────
   const act = (b: Bot, a: object) => emit(b.s, 'game:action', a);
@@ -126,7 +128,9 @@ async function main() {
           if (g && g.stepKind === 'question' && g.payload.index !== lastIdx) {
             lastIdx = g.payload.index;
             await sleep(300 + Math.random() * 1500);
-            const r = await act(b, { type: 'answer', index: lastIdx, choice: Math.floor(Math.random() * g.payload.choices.length) });
+            const r = g.payload.choices
+              ? await act(b, { type: 'answer', index: lastIdx, choice: Math.floor(Math.random() * g.payload.choices.length) })
+              : await act(b, { type: 'answer', index: lastIdx, choice: null, text: Math.random() < 0.5 ? '모름' : '아이 스크림' });
             if (bi === 0) {
               const again = await act(b, { type: 'answer', index: lastIdx, choice: 0 });
               assert(!again.ok, `[${gameId}] 중복 제출 차단`);
@@ -174,7 +178,7 @@ async function main() {
   };
 
   const played: string[] = [];
-  for (let round = 1; round <= ALL_GAME_IDS.length; round++) {
+  for (let round = 1; round <= GAME_IDS.length; round++) {
     const r = await cmd('nextGame');
     assert(r.ok, `라운드 ${round}: 랜덤 게임 선택`);
     await waitPhase('GAME_INTRO');
@@ -186,8 +190,14 @@ async function main() {
     // 화면/참가자에 정답 정보 누출 여부 검사
     const leak = JSON.stringify(screenState!.game);
     assert(!/correctIndex|"answer"|accepted/.test(leak), `[${gid}] 공개 상태에 정답 정보 없음`);
+    const t0 = Date.now();
     await play(gid);
     await waitPhase('CALCULATING');
+    if (['nonsense', 'chosung', 'ox'].includes(gid)) {
+      const full = { nonsense: 3 * 14, chosung: 3 * 19, ox: 5 * 9.5 }[gid as 'ox']! * 1000;
+      const took = Date.now() - t0;
+      assert(took < full * 0.75, `[${gid}] 전원 제출 시 조기 진행 (${Math.round(took / 1000)}초 / 최대 ${full / 1000}초)`);
+    }
     // 종료 후 제출 차단
     const late = await act(bots[5], { type: 'answer', qid: 1, choice: 0, index: 0 });
     assert(!late.ok, `[${gid}] 종료 후 제출 차단`);
