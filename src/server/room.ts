@@ -100,6 +100,12 @@ export class RoomManager {
   attach(io: Server) {
     this.io = io;
     this.restore();
+    // 서버 재시작 직후에는 모든 참가자가 '연결 끊김' 상태 → 자동 퇴장 타이머를 걸어 둠
+    // (재접속하면 취소됨. 휴대폰이 다시 붙을 시간을 주기 위해 최소 30초)
+    for (const room of this.rooms.values()) {
+      if (room.phase === 'FINISHED') continue;
+      for (const pid of Object.keys(room.players)) this.armKickTimer(room, pid, 30);
+    }
     // 진행 중 라이브 보드(대형 화면) 1초 간격 갱신
     this.liveTimer = setInterval(() => this.pushLive(), 1000);
   }
@@ -251,9 +257,10 @@ export class RoomManager {
   }
 
   /** 연결이 끊긴 상태(빨간불)가 설정 시간 동안 계속되면 자동 퇴장 */
-  private armKickTimer(room: Room, playerId: string) {
-    const sec = room.settings.autoKickSec ?? 10;
-    if (!sec || !room.players[playerId]) return;
+  private armKickTimer(room: Room, playerId: string, minSec = 0) {
+    const setting = room.settings.autoKickSec ?? 10;
+    if (!setting || !room.players[playerId]) return;
+    const sec = Math.max(setting, minSec);
     this.clearKickTimer(playerId);
     this.kickTimers.set(
       playerId,
@@ -329,7 +336,16 @@ export class RoomManager {
     }
     if (s.mathDifficulty && ['easy', 'normal', 'hard'].includes(s.mathDifficulty)) next.mathDifficulty = s.mathDifficulty;
     if (s.chosungMode && ['choice', 'input'].includes(s.chosungMode)) next.chosungMode = s.chosungMode;
+    const kickChanged = next.autoKickSec !== room.settings.autoKickSec;
     room.settings = next;
+    // 자동 퇴장 시간을 바꾸면 이미 빨간불인 참가자에게도 새 기준을 적용
+    if (kickChanged) {
+      for (const pid of Object.keys(room.players)) {
+        if (this.isOnline(pid)) continue;
+        if (next.autoKickSec) this.armKickTimer(room, pid);
+        else this.clearKickTimer(pid);
+      }
+    }
     this.commit(room);
     return { ok: true };
   }
@@ -888,6 +904,8 @@ export class RoomManager {
 
   shutdown() {
     if (this.liveTimer) clearInterval(this.liveTimer);
+    for (const t of this.kickTimers.values()) clearTimeout(t);
+    this.kickTimers.clear();
     this.flushAll();
   }
 }
