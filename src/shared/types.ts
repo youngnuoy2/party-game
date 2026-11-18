@@ -29,7 +29,10 @@ export type GameId =
   | 'cups'
   | 'stop10'
   | 'shape'
-  | 'rhythm';
+  | 'rhythm'
+  | 'nunchi'
+  | 'bomb'
+  | 'minority';
 
 export type MathDifficulty = 'easy' | 'normal' | 'hard';
 export type ChosungMode = 'choice' | 'input';

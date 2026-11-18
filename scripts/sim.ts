@@ -213,6 +213,42 @@ async function main() {
           if (times.length) await act(b, { type: 'taps', times });
           await sleep(300);
         }
+      } else if (gameId === 'nunchi') {
+        await sleep(300 + Math.random() * 2000);
+        const n = 70 + Math.floor(Math.random() * 31); // 큰 숫자에 몰리게 해서 겹침 발생
+        const r = await act(b, { type: 'pick', n });
+        if (bi === 0) {
+          const again = await act(b, { type: 'pick', n: 1 });
+          assert(r.ok && !again.ok, '[nunchi] 숫자 변경(재선택) 차단');
+        }
+        picks.set(b.nick, n);
+      } else if (gameId === 'minority') {
+        let lastIdx = -1;
+        while (isOn()) {
+          const g = st().game;
+          if (g && g.stepKind === 'question' && g.payload.index !== lastIdx) {
+            lastIdx = g.payload.index;
+            await sleep(200 + Math.random() * 1500);
+            await act(b, { type: 'pick', index: lastIdx, choice: Math.random() < 0.6 ? 0 : 1 });
+          }
+          await sleep(100);
+        }
+      } else if (gameId === 'bomb') {
+        while (isOn()) {
+          const it = b.me?.view?.item;
+          if (it) {
+            await sleep(200 + (1 - b.skill) * 400);
+            // 실력 좋은 봇은 폭탄을 피하고, 아닌 봇은 가끔 폭탄도 누름
+            if (it.kind === 'gift' || Math.random() > b.skill) {
+              const r = await act(b, { type: 'tap', id: it.id });
+              if (r.ok) b.me = { ...b.me!, view: r.data };
+            } else {
+              await sleep(it.lifeMs);
+              const r = await act(b, { type: 'expire', id: it.id });
+              if (r.ok) b.me = { ...b.me!, view: r.data };
+            }
+          } else await sleep(100);
+        }
       } else if (gameId === 'memory') {
         while (isOn()) {
           const r = await act(b, { type: 'next' });
@@ -237,6 +273,7 @@ async function main() {
   };
 
   const played: string[] = [];
+  const picks = new Map<string, number>();
   for (let round = 1; round <= GAME_IDS.length; round++) {
     const r = await cmd('nextGame');
     assert(r.ok, `라운드 ${round}: 랜덤 게임 선택`);
@@ -272,6 +309,19 @@ async function main() {
     assert(rr.entries[0].rank === 1, `[${gid}] 1위 존재 (${rr.entries[0].nickname} ${rr.entries[0].score}점, ${rr.entries[0].metric})`);
     const sorted = rr.entries.every((e, i, a) => i === 0 || a[i - 1].score >= e.score);
     assert(sorted, `[${gid}] 점수 내림차순 정렬`);
+    if (gid === 'nunchi') {
+      const cnt = new Map<number, number>();
+      for (const n of picks.values()) cnt.set(n, (cnt.get(n) ?? 0) + 1);
+      const uniq = [...cnt].filter(([, c]) => c === 1).map(([n]) => n).sort((a, b) => b - a);
+      const top = rr.entries[0];
+      const ok = uniq.length ? picks.get(top.nickname) === uniq[0] && top.score === 1000 : rr.entries.every((e) => e.score === 0);
+      assert(ok, `[nunchi] 겹치지 않는 가장 큰 숫자가 1등 (${uniq[0] ?? '없음'} → ${top.nickname} ${top.metric})`);
+      const dupOk = rr.entries.filter((e) => (cnt.get(picks.get(e.nickname)!) ?? 0) > 1).every((e) => e.score === 0);
+      assert(dupOk, '[nunchi] 겹친 숫자는 0점');
+    }
+    if (gid === 'minority') {
+      assert(rr.entries.every((e) => [0, 166, 167, 333, 334, 500, 499, 666, 667, 833, 999, 1000].includes(e.score) || e.score % 1 === 0), `[minority] 점수 계산 (1위 ${rr.entries[0].score}점, ${rr.entries[0].metric})`);
+    }
     if (gid === 'rhythm') {
       const cheat = rr.entries.find((e) => e.nickname === '봇3')!;
       assert(cheat.score === 0, `[rhythm] 미래 시각 터치 조작 무효 (${cheat.metric})`);

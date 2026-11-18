@@ -5,7 +5,10 @@ import { memoryGame } from './memory';
 import { chosungGame, nonsenseGame, oxGame } from './quizGames';
 import { reactionGame } from './reaction';
 import { colorGame, compareGame, mathGame, orderGame, senseGame, shapeGame, typingGame } from './streamGames';
+import { bombGame } from './bomb';
 import { cupsGame } from './cups';
+import { minorityGame } from './minority';
+import { nunchiGame } from './nunchi';
 import { rhythmGame } from './rhythm';
 import { stop10Game } from './stop10';
 import { targetGame } from './target';
@@ -30,4 +33,7 @@ export const GAMES: Record<GameId, GameModule> = {
   stop10: stop10Game,
   shape: shapeGame,
   rhythm: rhythmGame,
+  nunchi: nunchiGame,
+  bomb: bombGame,
+  minority: minorityGame,
 };

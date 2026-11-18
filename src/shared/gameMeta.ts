@@ -183,6 +183,36 @@ export const GAME_META: Record<GameId, GameMeta> = {
     scoring: '판정 점수 합 ÷ 만점 × 1000 (PERFECT 100 · GREAT 70 · GOOD 40, 헛터치 −20)',
     approxSeconds: 15,
   },
+  nunchi: {
+    id: 'nunchi',
+    name: '눈치게임',
+    emoji: '👀',
+    color: ['#f43f5e', '#a855f7'],
+    short: '1~100 중 하나! 남과 겹치지 않는 가장 큰 숫자가 승리',
+    howTo: ['1~100 중 숫자 하나를 선택 (15초, 기회 1번)', '다른 사람과 겹치면 탈락!', '겹치지 않은 숫자 중 가장 큰 숫자가 1등'],
+    scoring: '겹치지 않은 숫자끼리 큰 순서대로 1000점부터 차등, 겹친 숫자·미선택은 0점',
+    approxSeconds: 21,
+  },
+  bomb: {
+    id: 'bomb',
+    name: '폭탄 피하기',
+    emoji: '💣',
+    color: ['#22c55e', '#ef4444'],
+    short: '선물🎁은 터치, 폭탄💣은 피하기! 점점 빨라져요',
+    howTo: ['🎁 선물을 터치하면 득점', '💣 폭탄을 터치하면 크게 감점', '시간이 지날수록 빨라져요 (15초)'],
+    scoring: '선물 100점 + 속도 보너스(최대 50) − 폭탄 150점 → 1등 대비 환산',
+    approxSeconds: 15,
+  },
+  minority: {
+    id: 'minority',
+    name: '소수파 생존게임',
+    emoji: '🗳️',
+    color: ['#0ea5e9', '#f43f5e'],
+    short: 'A와 B 중 사람이 적은 쪽을 고르면 생존!',
+    howTo: ['A 또는 B 선택 (문제당 10초, 총 3문제)', '결과 공개 전까지 아무도 몰라요', '적은 쪽을 고른 사람만 생존!'],
+    scoring: '문제당 소수파 333점, 동수 167점, 다수파·미선택 0점',
+    approxSeconds: 42,
+  },
 };
 
 export const ALL_GAME_IDS = Object.keys(GAME_META) as GameId[];

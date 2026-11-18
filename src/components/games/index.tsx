@@ -7,7 +7,10 @@ import QuizGame from './QuizGame';
 import ReactionGame from './ReactionGame';
 import StreamGame from './StreamGame';
 import TapGame from './TapGame';
+import BombGame from './BombGame';
 import CupsGame from './CupsGame';
+import MinorityGame from './MinorityGame';
+import NunchiGame from './NunchiGame';
 import RhythmGame from './RhythmGame';
 import ShapeGame from './ShapeGame';
 import Stop10Game from './Stop10Game';
@@ -31,4 +34,7 @@ export const PLAYER_GAMES: Record<GameId, ComponentType<GameProps>> = {
   stop10: Stop10Game,
   shape: ShapeGame,
   rhythm: RhythmGame,
+  nunchi: NunchiGame,
+  bomb: BombGame,
+  minority: MinorityGame,
 };

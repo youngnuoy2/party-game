@@ -240,6 +240,10 @@ function Playing({ state }: { state: PublicState }) {
         <RhythmScreen state={state} />
       ) : g.gameId === 'stop10' ? (
         <Stop10Screen state={state} />
+      ) : g.gameId === 'nunchi' ? (
+        <NunchiScreen state={state} />
+      ) : g.gameId === 'minority' ? (
+        <MinorityScreen state={state} />
       ) : (
         <LiveBoard state={state} />
       )}
@@ -395,6 +399,109 @@ function Stop10Screen({ state }: { state: PublicState }) {
       <div className="text-5xl">
         STOP 누른 사람 <span className="font-display text-7xl gold-text">{state.submitted}</span> / {state.participantCount}명
       </div>
+    </div>
+  );
+}
+
+function NunchiScreen({ state }: { state: PublicState }) {
+  const g = state.game!;
+  const rv = (g.payload as { reveal?: { counts: Record<string, number>; winner: number | null; uniqueCount: number } }).reveal;
+  if (!rv)
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-10">
+        <div className="text-6xl font-bold">1~100 중 남과 겹치지 않는 <span className="text-amber-200">가장 큰 숫자</span>!</div>
+        <div className="text-[9rem] leading-none">🤫</div>
+        <div className="text-5xl">
+          선택 완료 <span className="font-display text-7xl gold-text">{state.submitted}</span> / {state.participantCount}명
+        </div>
+      </div>
+    );
+  return (
+    <div className="flex flex-1 flex-col gap-6">
+      <div className="flex items-center gap-8">
+        <span className="font-display text-6xl">
+          우승 숫자 <span className="gold-text">{rv.winner ?? '없음'}</span>
+        </span>
+        <span className="text-4xl text-white/60">안 겹친 숫자 {rv.uniqueCount}개</span>
+        <span className="ml-auto flex gap-6 text-3xl">
+          <span className="text-emerald-300">■ 안 겹침</span>
+          <span className="text-rose-300">■ 겹침</span>
+        </span>
+      </div>
+      <div className="grid flex-1 grid-cols-20 gap-2" style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}>
+        {Array.from({ length: 100 }, (_, i) => i + 1).map((n) => {
+          const c = rv.counts[n] ?? 0;
+          return (
+            <motion.div
+              key={n}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: n === rv.winner ? 1.15 : 1 }}
+              transition={{ delay: n * 0.012 }}
+              className={cx(
+                'flex flex-col items-center justify-center rounded-xl text-3xl font-bold tabular-nums',
+                n === rv.winner ? 'bg-amber-400 text-ink-950 shadow-gold' : c === 1 ? 'bg-emerald-500/40' : c > 1 ? 'bg-rose-600/50' : 'bg-white/[0.04] text-white/30',
+              )}
+            >
+              {n}
+              {c > 0 && <span className="text-lg">{c}명</span>}
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MinorityScreen({ state }: { state: PublicState }) {
+  const g = state.game!;
+  const p = g.payload as { index: number; total: number; options: [string, string]; reveal?: { a: number; b: number; winner: 0 | 1 | 'tie' | null } };
+  const rv = g.stepKind === 'reveal' ? p.reveal : undefined;
+  const total = rv ? Math.max(1, rv.a + rv.b) : 1;
+  return (
+    <div className="flex flex-1 flex-col gap-6">
+      <div className="flex items-center gap-6 text-4xl">
+        <span className="rounded-full bg-white/10 px-5 py-1">
+          문제 {p.index + 1} / {p.total}
+        </span>
+        <span className="font-display text-5xl">사람이 <span className="text-amber-200">적은 쪽</span>을 고르면 생존!</span>
+        <span className="ml-auto text-white/70">
+          선택 {state.submitted} / {state.participantCount}명
+        </span>
+      </div>
+      <div className="grid flex-1 grid-cols-2 gap-8">
+        {p.options.map((label, i) => {
+          const count = rv ? (i === 0 ? rv.a : rv.b) : null;
+          const win = rv && (rv.winner === i || rv.winner === 'tie');
+          return (
+            <div
+              key={i}
+              className={cx(
+                'relative flex flex-col items-center justify-center overflow-hidden rounded-[2rem] border-4',
+                i === 0 ? 'border-sky-400/50 bg-sky-600/25' : 'border-rose-400/50 bg-rose-600/25',
+                rv && !win && 'opacity-40',
+                win && 'shadow-gold',
+              )}
+            >
+              {count !== null && (
+                <motion.div
+                  initial={{ height: 0 }}
+                  animate={{ height: `${(count / total) * 100}%` }}
+                  transition={{ duration: 1.2 }}
+                  className={cx('absolute inset-x-0 bottom-0', i === 0 ? 'bg-sky-500/40' : 'bg-rose-500/40')}
+                />
+              )}
+              <div className="relative font-display text-6xl text-white/60">{i === 0 ? 'A' : 'B'}</div>
+              <div className="relative mt-4 font-display text-8xl">{label}</div>
+              {count !== null && (
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1 }} className="relative mt-6 font-display text-7xl">
+                  {count}명 {win ? '🎉 생존' : ''}
+                </motion.div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {rv && rv.winner === null && <div className="text-center font-display text-5xl text-rose-300">한쪽으로 몰렸어요! 생존자 없음</div>}
     </div>
   );
 }
