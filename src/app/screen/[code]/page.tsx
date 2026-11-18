@@ -255,6 +255,7 @@ function QuizBoard({ state }: { state: PublicState }) {
     prompt: string;
     hint?: string;
     big?: string;
+    lengthHint?: number;
     choices: string[] | null;
     reveal?: { correctIndex: number | null; answerText: string; explain: string; dist: number[]; correctCount: number; answered: number };
   };
@@ -289,7 +290,10 @@ function QuizBoard({ state }: { state: PublicState }) {
             <div className="mt-3 font-display text-[10rem] leading-none tracking-[0.3em] text-emerald-300 drop-shadow-[0_0_30px_rgba(52,211,153,.5)]">{p.big}</div>
           </>
         ) : (
-          <div className="text-7xl font-bold leading-tight">{p.prompt}</div>
+          <>
+            <div className="text-7xl font-bold leading-tight">{p.prompt}</div>
+            {p.lengthHint && <div className="mt-4 text-4xl text-amber-200">💡 정답 {p.lengthHint}글자</div>}
+          </>
         )}
       </motion.div>
       {p.choices ? (

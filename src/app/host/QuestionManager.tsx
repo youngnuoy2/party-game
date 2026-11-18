@@ -31,7 +31,7 @@ export default function QuestionManager({ password }: { password: string }) {
 
   const add = async () => {
     let item: Record<string, unknown>;
-    if (kind === 'nonsense') item = { q: f('q'), choices: [f('c0'), f('c1'), f('c2'), f('c3')], explain: f('explain'), category: f('category') };
+    if (kind === 'nonsense') item = { q: f('q'), answer: f('answer'), aliases: f('aliases').split(',').map((x) => x.trim()).filter(Boolean), explain: f('explain'), category: f('category') };
     else if (kind === 'chosung') item = { answer: f('answer'), category: f('category'), aliases: f('aliases').split(',').map((s) => s.trim()).filter(Boolean), explain: f('explain') };
     else item = { q: f('q'), answer: f('ox') || 'O', explain: f('explain'), category: f('category') };
     const r = await emitAck('admin:questions', { password, op: 'add', kind, item });
@@ -65,12 +65,8 @@ export default function QuestionManager({ password }: { password: string }) {
         {kind === 'nonsense' && (
           <>
             <input className="input" placeholder="문제" value={f('q')} onChange={set('q')} />
-            <div className="grid grid-cols-2 gap-2">
-              <input className="input border-emerald-400/50" placeholder="정답 보기" value={f('c0')} onChange={set('c0')} />
-              <input className="input" placeholder="오답 보기 1" value={f('c1')} onChange={set('c1')} />
-              <input className="input" placeholder="오답 보기 2" value={f('c2')} onChange={set('c2')} />
-              <input className="input" placeholder="오답 보기 3" value={f('c3')} onChange={set('c3')} />
-            </div>
+            <input className="input border-emerald-400/50" placeholder="정답 (주관식)" value={f('answer')} onChange={set('answer')} />
+            <input className="input" placeholder="추가 인정 답 (쉼표로 구분, 선택)" value={f('aliases')} onChange={set('aliases')} />
           </>
         )}
         {kind === 'chosung' && (
@@ -127,7 +123,7 @@ export default function QuestionManager({ password }: { password: string }) {
 }
 
 function describe(kind: QuestionBankKind, q: any) {
-  if (kind === 'nonsense') return `${q.q} → ${q.choices[0]}`;
+  if (kind === 'nonsense') return `${q.q} → ${q.choices[0]}${q.aliases?.length ? ` (${q.aliases.join(', ')})` : ''}`;
   if (kind === 'chosung') return `[${q.category}] ${toChosung(q.answer)} → ${q.answer}`;
   return `${q.q} → ${q.answer}`;
 }

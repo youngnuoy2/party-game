@@ -257,7 +257,7 @@ async function main() {
       assert(took < 14_000, `[stop10] 전원 STOP 시 조기 종료 (${Math.round(took / 1000)}초)`);
     }
     if (['nonsense', 'chosung', 'ox'].includes(gid)) {
-      const full = { nonsense: 3 * 14, chosung: 3 * 19, ox: 5 * 9.5 }[gid as 'ox']! * 1000;
+      const full = { nonsense: 3 * 19, chosung: 3 * 19, ox: 5 * 9.5 }[gid as 'ox']! * 1000;
       const took = Date.now() - t0;
       assert(took < full * 0.75, `[${gid}] 전원 제출 시 조기 진행 (${Math.round(took / 1000)}초 / 최대 ${full / 1000}초)`);
     }

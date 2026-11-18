@@ -5,18 +5,20 @@ import { makeQuizGame, type QuizQ } from './quizGame';
 
 export const nonsenseGame = makeQuizGame({
   id: 'nonsense',
-  questionMs: 10_000,
+  questionMs: 15_000, // 주관식 입력 시간 고려
   revealMs: 4_000,
   build(ctx) {
+    // 주관식: 보기 없이 직접 입력. 정답 + 허용 표현(aliases) 인정
     return ctx.takeQuestions('nonsense', getBank().nonsense, 3).map((item): QuizQ => {
-      const choices = shuffle([...item.choices]);
+      const answer = item.choices[0];
       return {
         id: item.id,
         prompt: item.q,
         hint: item.category,
-        choices,
-        correctIndex: choices.indexOf(item.choices[0]),
-        accepted: [item.choices[0]],
+        lengthHint: answer.replace(/[\s,]/g, '').length,
+        choices: null,
+        correctIndex: 0,
+        accepted: [answer, ...(item.aliases ?? [])],
         answerText: item.choices[0],
         explain: item.explain,
       };

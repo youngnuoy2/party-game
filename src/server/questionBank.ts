@@ -58,10 +58,10 @@ export function addQuestion(kind: QuestionBankKind, input: any): { ok: boolean; 
   const category = s(input?.category, 20) || '사용자';
   if (kind === 'nonsense') {
     const q = s(input?.q);
-    const choices = (Array.isArray(input?.choices) ? input.choices : []).map((c: unknown) => s(c, 30));
-    if (!q || choices.length !== 4 || choices.some((c: string) => !c)) return { ok: false, error: '문제와 보기 4개(첫 번째가 정답)를 입력하세요' };
-    if (new Set(choices).size !== 4) return { ok: false, error: '보기가 중복됩니다' };
-    custom.nonsense.push({ id: newId('cn'), q, choices: choices as ChoiceQuestion['choices'], explain: s(input?.explain), difficulty, category });
+    const answer = s(input?.answer, 30);
+    if (!q || !answer) return { ok: false, error: '문제와 정답을 입력하세요' };
+    const aliases = (Array.isArray(input?.aliases) ? input.aliases : []).map((a: unknown) => s(a, 30)).filter(Boolean);
+    custom.nonsense.push({ id: newId('cn'), q, choices: [answer], aliases, explain: s(input?.explain), difficulty, category });
   } else if (kind === 'chosung') {
     const answer = s(input?.answer, 20).replace(/\s+/g, '');
     if (!/^[가-힣]{2,10}$/.test(answer)) return { ok: false, error: '정답은 2~10자의 완성형 한글이어야 합니다' };

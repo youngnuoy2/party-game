@@ -12,6 +12,7 @@ interface Payload {
   prompt: string;
   hint?: string;
   big?: string;
+  lengthHint?: number;
   choices: string[] | null;
   inputMode: boolean;
   reveal?: { correctIndex: number | null; answerText: string; explain: string; dist: number[]; correctCount: number; answered: number };
@@ -83,7 +84,10 @@ export default function QuizGame({ state, me, act, setView }: GameProps) {
             <div className="mt-2 font-display text-6xl tracking-[0.25em] text-emerald-300 drop-shadow-[0_0_20px_rgba(52,211,153,.5)]">{p.big}</div>
           </>
         ) : (
-          <div className="text-2xl font-bold leading-snug">{p.prompt}</div>
+          <>
+            <div className="text-2xl font-bold leading-snug">{p.prompt}</div>
+            {p.lengthHint && <div className="mt-2 text-sm text-amber-200">💡 정답 {p.lengthHint}글자</div>}
+          </>
         )}
       </motion.div>
 
@@ -133,7 +137,7 @@ export default function QuizGame({ state, me, act, setView }: GameProps) {
         >
           <input
             className="input text-center text-2xl"
-            placeholder={p.hint ? `${p.hint} 분야의 정답 입력` : '정답 입력 (띄어쓰기 무관)'}
+            placeholder={p.big && p.hint ? `${p.hint} 분야의 정답 입력` : '정답 입력 (띄어쓰기 무관)'}
             value={submitted?.text ?? text}
             onChange={(e) => setText(e.target.value)}
             disabled={!!submitted || isReveal || state.paused}

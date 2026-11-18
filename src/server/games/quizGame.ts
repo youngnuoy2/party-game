@@ -11,6 +11,7 @@ export interface QuizQ {
   prompt: string; // 문제 본문
   hint?: string; // 카테고리 등
   big?: string; // 크게 보여줄 텍스트 (초성 등)
+  lengthHint?: number; // 주관식 정답 글자 수 힌트
   choices: string[] | null; // null 이면 직접 입력
   correctIndex: number; // 보기형일 때
   accepted: string[]; // 직접 입력 시 인정 답 (정규화 전)
@@ -79,6 +80,7 @@ export function makeQuizGame(o: Opts): GameModule<QuizData, PState> {
         prompt: q.prompt,
         hint: q.hint,
         big: q.big,
+        lengthHint: q.lengthHint,
         choices: q.choices,
         inputMode: q.choices === null,
       };
