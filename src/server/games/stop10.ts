@@ -14,6 +14,7 @@ interface PState {
 export const stop10Game: GameModule<{}, PState> = {
   id: 'stop10',
   pausable: false,
+  hideTimer: true,
   scoring: 'relative',
   create() {
     return { data: {}, steps: [{ kind: 'play', durationMs: DURATION }] };

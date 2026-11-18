@@ -249,6 +249,51 @@ async function main() {
             }
           } else await sleep(100);
         }
+      } else if (gameId === 'stack') {
+        const g = st().game!;
+        while (isOn()) {
+          const v = b.me?.view;
+          if (!v || v.over) break;
+          await sleep(500 + Math.random() * 900 * (1 - b.skill));
+          const r = await act(b, { type: 'drop', t: Date.now() - g.stepStartedAt });
+          if (r.ok) b.me = { ...b.me!, view: r.data };
+        }
+      } else if (gameId === 'bubble') {
+        const g = st().game!;
+        const bubbles: any[] = g.payload.bubbles;
+        if (bi === 0) {
+          const early = await act(b, { type: 'pop', id: bubbles[bubbles.length - 1].id }); // 아직 안 떠오른 방울
+          assert(!early.ok, '[bubble] 아직 떠오르지 않은 비눗방울 터뜨리기 차단');
+        }
+        const done = new Set<number>();
+        while (isOn()) {
+          const t = Date.now() - g.stepStartedAt;
+          const vis = bubbles.filter((x) => !done.has(x.id) && t > x.spawnAt + 300 && t < x.spawnAt + x.riseMs - 200);
+          const target = vis.find((x) => x.kind !== 'red' || Math.random() > b.skill);
+          if (target) {
+            done.add(target.id);
+            await act(b, { type: 'pop', id: target.id });
+          }
+          await sleep(250 + (1 - b.skill) * 400);
+        }
+      } else if (gameId === 'horse') {
+        await sleep(200 + Math.random() * 2000);
+        const h = Math.floor(Math.random() * 5);
+        await act(b, { type: 'pick', horse: h });
+        picks.set(b.nick, h);
+      } else if (gameId === 'potato') {
+        const onBomb = async () => {
+          await sleep(350 + Math.random() * 1500 * (1 - b.skill));
+          const v = b.me?.view;
+          if (v?.holding?.length) await act(b, { type: 'pass', bomb: v.holding[0] });
+        };
+        const handler = () => void onBomb();
+        b.s.on('game:push', handler);
+        while (isOn()) {
+          if (b.me?.view?.holding?.length) await onBomb();
+          await sleep(300);
+        }
+        b.s.off('game:push', handler);
       } else if (gameId === 'memory') {
         while (isOn()) {
           const r = await act(b, { type: 'next' });
@@ -318,6 +363,14 @@ async function main() {
       assert(ok, `[nunchi] 겹치지 않는 가장 큰 숫자가 1등 (${uniq[0] ?? '없음'} → ${top.nickname} ${top.metric})`);
       const dupOk = rr.entries.filter((e) => (cnt.get(picks.get(e.nickname)!) ?? 0) > 1).every((e) => e.score === 0);
       assert(dupOk, '[nunchi] 겹친 숫자는 0점');
+    }
+    if (gid === 'horse') {
+      const winnerPickers = rr.entries.filter((e) => e.metric.includes('· 1등'));
+      assert(winnerPickers.every((e) => e.score === 1000) && rr.entries.filter((e) => e.score === 1000).length === winnerPickers.length, `[horse] 우승마 선택자 1000점 (${winnerPickers.length}명)`);
+    }
+    if (gid === 'potato') {
+      const boom = rr.entries.filter((e) => e.metric.includes('펑'));
+      assert(boom.length >= 1 && boom.every((e) => e.score === 0), `[potato] 폭탄이 터질 때 소지자 0점 (${boom.map((e) => e.nickname).join(', ')})`);
     }
     if (gid === 'minority') {
       assert(rr.entries.every((e) => [0, 166, 167, 333, 334, 500, 499, 666, 667, 833, 999, 1000].includes(e.score) || e.score % 1 === 0), `[minority] 점수 계산 (1위 ${rr.entries[0].score}점, ${rr.entries[0].metric})`);

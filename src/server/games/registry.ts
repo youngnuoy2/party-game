@@ -6,6 +6,10 @@ import { chosungGame, nonsenseGame, oxGame } from './quizGames';
 import { reactionGame } from './reaction';
 import { colorGame, compareGame, mathGame, orderGame, senseGame, shapeGame, typingGame } from './streamGames';
 import { bombGame } from './bomb';
+import { bubbleGame } from './bubble';
+import { horseGame } from './horse';
+import { potatoGame } from './potato';
+import { stackGame } from './stack';
 import { cupsGame } from './cups';
 import { minorityGame } from './minority';
 import { nunchiGame } from './nunchi';
@@ -36,4 +40,8 @@ export const GAMES: Record<GameId, GameModule> = {
   nunchi: nunchiGame,
   bomb: bombGame,
   minority: minorityGame,
+  stack: stackGame,
+  bubble: bubbleGame,
+  horse: horseGame,
+  potato: potatoGame,
 };

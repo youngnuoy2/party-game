@@ -7,7 +7,7 @@ import { isSoundOn, setSound, sfx, unlockAudio } from '@/lib/sound';
 import { useJoinUrl } from '@/lib/useJoinUrl';
 import { useOnConnect, useRoomStreams } from '@/lib/useRoom';
 import { useServerNow } from '@/lib/useNow';
-import { CupsBoard, cupsCaption, RhythmLane, type CupsPayload, type RhythmPayload } from '@/components/games/visuals';
+import { BubbleField, CupsBoard, cupsCaption, HORSE_COLORS, HorseTrack, RhythmLane, type BubbleT, type CupsPayload, type HorsePayload, type RhythmPayload } from '@/components/games/visuals';
 import { GAME_META, TIE_RULE } from '@/shared/gameMeta';
 import type { PublicState } from '@/shared/types';
 
@@ -219,7 +219,7 @@ function Playing({ state }: { state: PublicState }) {
   const g = state.game!;
   const isQuiz = ['nonsense', 'chosung', 'ox'].includes(g.gameId);
   // 10초 게임은 남은 시간이 힌트가 되므로, 컵 게임은 섞는 중에는 타이머 숨김
-  const showTimer = g.stepKind !== 'reveal' && g.gameId !== 'stop10' && !(g.gameId === 'cups' && g.stepKind !== 'question');
+  const showTimer = g.stepKind !== 'reveal' && !g.hideTimer && !(g.gameId === 'cups' && g.stepKind !== 'question');
   return (
     <div className="flex h-full flex-col gap-6">
       <div className="flex items-center gap-6">
@@ -244,6 +244,15 @@ function Playing({ state }: { state: PublicState }) {
         <NunchiScreen state={state} />
       ) : g.gameId === 'minority' ? (
         <MinorityScreen state={state} />
+      ) : g.gameId === 'horse' ? (
+        <HorseScreen state={state} />
+      ) : g.gameId === 'bubble' ? (
+        <div className="grid flex-1 grid-cols-[1fr_640px] gap-8">
+          <BubbleField bubbles={(g.payload as { bubbles: BubbleT[] }).bubbles} stepStartedAt={g.stepStartedAt} big />
+          <LiveTop5 state={state} />
+        </div>
+      ) : g.gameId === 'potato' ? (
+        <PotatoScreen state={state} />
       ) : (
         <LiveBoard state={state} />
       )}
@@ -502,6 +511,67 @@ function MinorityScreen({ state }: { state: PublicState }) {
         })}
       </div>
       {rv && rv.winner === null && <div className="text-center font-display text-5xl text-rose-300">한쪽으로 몰렸어요! 생존자 없음</div>}
+    </div>
+  );
+}
+
+function HorseScreen({ state }: { state: PublicState }) {
+  const g = state.game!;
+  const p = g.payload as HorsePayload;
+  const caption = g.stepKind === 'pick' ? '🐎 우승할 말을 고르세요!' : g.stepKind === 'race' ? '🏁 경주 시작!' : '🏆 경주 결과';
+  const raceStart = g.stepKind === 'race' ? g.stepStartedAt : g.stepKind === 'reveal' ? g.stepStartedAt - 99_999 : null;
+  const winner = p.order?.[0];
+  return (
+    <div className="flex flex-1 flex-col gap-6">
+      <div className="flex items-center gap-6">
+        <span className="font-display text-6xl">{caption}</span>
+        <span className="ml-auto text-4xl text-white/70">
+          선택 {state.submitted} / {state.participantCount}명
+        </span>
+      </div>
+      <HorseTrack p={p} raceStartedAt={raceStart} big />
+      {winner != null && (
+        <div className="text-center font-display text-6xl">
+          우승 <span style={{ color: HORSE_COLORS[winner] }}>{winner + 1}번 말</span> · 적중 {p.counts?.[winner] ?? 0}명!
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PotatoScreen({ state }: { state: PublicState }) {
+  const g = state.game!;
+  const p = g.payload as { holders: (string | null)[]; bombCount: number; victims: string[] | null };
+  const name = (id: string | null) => state.players.find((x) => x.id === id)?.nickname ?? '...';
+  if (p.victims)
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-8">
+        <motion.div initial={{ scale: 0.2 }} animate={{ scale: [0.2, 1.4, 1] }} className="text-[12rem] leading-none">
+          💥
+        </motion.div>
+        <div className="font-display text-7xl text-rose-300">펑!! 폭탄이 터졌습니다</div>
+        <div className="flex flex-wrap justify-center gap-4">
+          {p.victims.map((id) => (
+            <span key={id} className="rounded-full bg-rose-600/40 px-8 py-3 font-display text-5xl">
+              {name(id)}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-10">
+      <div className="text-5xl text-white/80">언제 터질지 아무도 몰라요... 빨리 넘기세요!</div>
+      <div className="flex flex-wrap justify-center gap-10">
+        {p.holders.map((h, i) => (
+          <motion.div key={i} animate={{ rotate: [-6, 6, -6] }} transition={{ repeat: Infinity, duration: 0.35 }} className="flex flex-col items-center gap-3">
+            <div className="text-[8rem] leading-none">🧨</div>
+            <motion.div key={h ?? 'none'} initial={{ scale: 1.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="rounded-full bg-red-600/40 px-8 py-2 font-display text-5xl">
+              {h ? name(h) : '-'}
+            </motion.div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }

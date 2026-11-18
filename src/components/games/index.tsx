@@ -8,6 +8,10 @@ import ReactionGame from './ReactionGame';
 import StreamGame from './StreamGame';
 import TapGame from './TapGame';
 import BombGame from './BombGame';
+import BubbleGame from './BubbleGame';
+import HorseGame from './HorseGame';
+import PotatoGame from './PotatoGame';
+import StackGame from './StackGame';
 import CupsGame from './CupsGame';
 import MinorityGame from './MinorityGame';
 import NunchiGame from './NunchiGame';
@@ -37,4 +41,8 @@ export const PLAYER_GAMES: Record<GameId, ComponentType<GameProps>> = {
   nunchi: NunchiGame,
   bomb: BombGame,
   minority: MinorityGame,
+  stack: StackGame,
+  bubble: BubbleGame,
+  horse: HorseGame,
+  potato: PotatoGame,
 };

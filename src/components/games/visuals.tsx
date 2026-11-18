@@ -200,3 +200,96 @@ export function RhythmLane({ p, stepStartedAt, big = false, metronome = false, f
     </div>
   );
 }
+
+// ───────────────────────── 경마 ─────────────────────────
+export interface HorsePayload {
+  horses: number;
+  finish?: number[];
+  curves?: number[][];
+  counts?: number[];
+  order?: number[] | null;
+}
+export const HORSE_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7'];
+
+function horseProgress(p: HorsePayload, h: number, t: number) {
+  if (!p.finish || !p.curves) return 0;
+  const f = p.finish[h];
+  if (t >= f) return 1;
+  if (t <= 0) return 0;
+  const seg = f / p.curves[h].length;
+  const k = Math.floor(t / seg);
+  const prev = k === 0 ? 0 : p.curves[h][k - 1];
+  const next = p.curves[h][k];
+  return prev + (next - prev) * ((t - k * seg) / seg);
+}
+
+export function HorseTrack({ p, raceStartedAt, mine, big = false }: { p: HorsePayload; raceStartedAt: number | null; mine?: number | null; big?: boolean }) {
+  const now = useFrameNow();
+  const t = raceStartedAt ? now - raceStartedAt : 0;
+  return (
+    <div className={cx('relative w-full space-y-2 rounded-3xl border border-white/10 bg-gradient-to-r from-emerald-900/50 to-emerald-800/30 p-3', big && 'space-y-4 p-6')}>
+      <div className="absolute inset-y-2 right-[15%] w-1.5 bg-[repeating-linear-gradient(0deg,#fff_0_8px,#000_8px_16px)] opacity-70" />
+      {Array.from({ length: p.horses }, (_, h) => {
+        const prog = raceStartedAt ? horseProgress(p, h, t) : 0;
+        const place = p.order ? p.order.indexOf(h) + 1 : null;
+        return (
+          <div key={h} className={cx('relative flex items-center rounded-full bg-black/25', big ? 'h-24' : 'h-12', mine === h && 'ring-4 ring-amber-300')}>
+            <span className={cx('absolute left-3 font-display text-white/50', big ? 'text-4xl' : 'text-lg')}>{h + 1}</span>
+            <div className="absolute" style={{ left: `${6 + prog * 75}%`, transition: 'none' }}>
+              <div className={cx('relative -translate-x-1/2 -scale-x-100 leading-none', big ? 'text-7xl' : 'text-4xl')}>
+                🏇
+                <span className="absolute -bottom-1 left-1/2 h-2 w-8 -translate-x-1/2 rounded-full" style={{ background: HORSE_COLORS[h] }} />
+              </div>
+            </div>
+            {place && <span className={cx('absolute right-3 font-display', big ? 'text-5xl' : 'text-xl', place === 1 ? 'text-amber-300' : 'text-white/70')}>{place}등</span>}
+            {p.counts && !place && <span className={cx('absolute right-3 text-white/60', big ? 'text-3xl' : 'text-sm')}>👥{p.counts[h]}</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ───────────────────────── 버블팝 ─────────────────────────
+export interface BubbleT {
+  id: number;
+  kind: 'blue' | 'gold' | 'red';
+  x: number;
+  size: number;
+  spawnAt: number;
+  riseMs: number;
+}
+const BUBBLE_STYLE: Record<BubbleT['kind'], string> = {
+  blue: 'radial-gradient(circle at 30% 30%, #ffffff 0 10%, #7dd3fc 25%, #2563eb 85%)',
+  gold: 'radial-gradient(circle at 30% 30%, #ffffff 0 10%, #fde68a 25%, #f59e0b 85%)',
+  red: 'radial-gradient(circle at 30% 30%, #ffffff 0 10%, #fca5a5 25%, #dc2626 85%)',
+};
+const BUBBLE_LABEL = { blue: '+10', gold: '+50', red: '−30' };
+
+export function BubbleField({ bubbles, stepStartedAt, popped, onPop, big = false }: { bubbles: BubbleT[]; stepStartedAt: number; popped?: Set<number>; onPop?: (b: BubbleT) => void; big?: boolean }) {
+  const now = useFrameNow();
+  const t = now - stepStartedAt;
+  return (
+    <div className={cx('relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-sky-950/40 to-indigo-950/40', big ? 'h-[760px]' : 'min-h-[60dvh] flex-1')}>
+      {bubbles.map((b) => {
+        const age = t - b.spawnAt;
+        if (age < 0 || age > b.riseMs || popped?.has(b.id)) return null;
+        const y = 105 - (age / b.riseMs) * 120; // 아래 → 위
+        return (
+          <button
+            key={b.id}
+            type="button"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              onPop?.(b);
+            }}
+            className={cx('absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full font-display text-white shadow-[0_0_18px_rgba(255,255,255,.35)]', big ? 'text-3xl' : 'text-sm')}
+            style={{ left: `${b.x}%`, top: `${y}%`, width: `${b.size}%`, aspectRatio: '1', background: BUBBLE_STYLE[b.kind] }}
+          >
+            {BUBBLE_LABEL[b.kind]}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

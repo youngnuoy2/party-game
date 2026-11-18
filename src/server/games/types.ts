@@ -35,6 +35,12 @@ export interface ActionEnv {
   schedule(ms: number, fn: () => void): void;
   /** 상태 변경 알림 (개인 화면 갱신) */
   touch(playerId: string): void;
+  /** 참가자 접속 여부 */
+  isOnline(playerId: string): boolean;
+  /** 현재 단계를 즉시 끝내고 다음 단계로 (숨겨진 종료 시각이 있는 게임용) */
+  endStepNow(): void;
+  /** 공개 상태(대형 화면 등)를 즉시 다시 보냄 */
+  syncPublic(): void;
 }
 
 export interface FinalEntry {
@@ -66,6 +72,8 @@ export interface GameModule<D = any, P = any> {
   isDone?(round: Round<D, P>, playerId: string): boolean;
   liveBoard?(round: Round<D, P>, nick: (id: string) => string): LiveBoardRow[];
   finalize(round: Round<D, P>): Record<string, FinalEntry>;
+  /** true 면 남은 시간을 화면에 표시하지 않음 (시간이 힌트가 되는 게임) */
+  hideTimer?: boolean;
 }
 
 /** 지연시간 보정용 유예 (마감 후에도 이 시간 안에 도착한 제출은 인정) */

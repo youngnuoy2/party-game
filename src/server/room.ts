@@ -499,6 +499,11 @@ export class RoomManager {
         this.roundTimers.set(room.code, set);
       },
       touch: (pid) => this.emitMe(room, pid),
+      isOnline: (pid) => this.isOnline(pid),
+      endStepNow: () => {
+        if (room.phase === 'PLAYING' && room.round === r && !room.paused) this.setTimer(room, Date.now(), 'stepEnd');
+      },
+      syncPublic: () => this.broadcast(room),
     };
   }
 
@@ -762,6 +767,7 @@ export class RoomManager {
         stepStartedAt: r.stepStartedAt,
         stepEndsAt: r.stepEndsAt,
         pausable: mod.pausable,
+        hideTimer: !!mod.hideTimer,
         payload: mod.publicPayload(r),
       };
     }

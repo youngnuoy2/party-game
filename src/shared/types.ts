@@ -32,7 +32,11 @@ export type GameId =
   | 'rhythm'
   | 'nunchi'
   | 'bomb'
-  | 'minority';
+  | 'minority'
+  | 'stack'
+  | 'bubble'
+  | 'horse'
+  | 'potato';
 
 export type MathDifficulty = 'easy' | 'normal' | 'hard';
 export type ChosungMode = 'choice' | 'input';
@@ -122,6 +126,7 @@ export interface GamePublic {
   stepStartedAt: number;
   stepEndsAt: number;
   pausable: boolean;
+  hideTimer: boolean;
   payload: any;
 }
 
