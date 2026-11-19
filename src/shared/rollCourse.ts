@@ -2,7 +2,9 @@
 export const ROLL_W = 100;
 export const ROLL_H = 160;
 export const BALL_R = 3.2;
-export const HOLE_R = 5;
+export const HOLE_R = 4.5;
+/** 구멍 위·아래로 공이 지나가려면 필요한 최소 틈 (공 지름 + 여유) */
+export const PASS_GAP = BALL_R * 2 + 2;
 export const GOAL_R = 7;
 export const MAX_SPEED = 55; // 단위/초
 export const START = { x: 50, y: 150 };

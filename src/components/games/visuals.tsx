@@ -224,13 +224,15 @@ function horseProgress(p: HorsePayload, h: number, t: number) {
   return prev + (next - prev) * ((t - k * seg) / seg);
 }
 
-const FINISH_X = 72; // 결승선 위치 (레인 너비 %)
+// 결승선 위치 (레인 너비 %): 대형 화면은 오른쪽 순위 표시 바로 앞, 휴대폰은 좁아서 조금 앞쪽
+const FINISH_X = { big: 85, small: 76 };
 const START_X = 9; // 출발선 (말 코끝 기준)
-const RUN_OUT = 5; // 결승선 통과 후 더 달려가는 거리
+const RUN_OUT = 3; // 결승선 통과 후 더 달려가는 거리
 
 export function HorseTrack({ p, raceStartedAt, mine, big = false }: { p: HorsePayload; raceStartedAt: number | null; mine?: number | null; big?: boolean }) {
   const now = useFrameNow();
   const t = raceStartedAt ? now - raceStartedAt : 0;
+  const finishX = big ? FINISH_X.big : FINISH_X.small;
   return (
     <div className={cx('relative w-full space-y-2 rounded-3xl border border-white/10 bg-gradient-to-r from-emerald-900/50 to-emerald-800/30 p-3', big && 'space-y-4 p-6')}>
       {Array.from({ length: p.horses }, (_, h) => {
@@ -240,8 +242,8 @@ export function HorseTrack({ p, raceStartedAt, mine, big = false }: { p: HorsePa
         const nose = !raceStartedAt
           ? START_X
           : finished
-            ? FINISH_X + Math.min(RUN_OUT, ((t - f!) / 600) * RUN_OUT)
-            : START_X + horseProgress(p, h, t) * (FINISH_X - START_X);
+            ? finishX + Math.min(RUN_OUT, ((t - f!) / 600) * RUN_OUT)
+            : START_X + horseProgress(p, h, t) * (finishX - START_X);
         // 도착 순위: 결승선을 넘은 말부터 실시간 표시
         const place = finished && p.finish ? p.finish.filter((x) => x <= f!).length : null;
         return (
@@ -250,7 +252,7 @@ export function HorseTrack({ p, raceStartedAt, mine, big = false }: { p: HorsePa
             {/* 결승선 (체커 무늬) */}
             <div
               className={cx('absolute inset-y-0', big ? 'w-3' : 'w-2')}
-              style={{ left: `${FINISH_X}%`, background: 'repeating-conic-gradient(#fff 0 25%, #111 0 50%) 0 0 / 8px 8px' }}
+              style={{ left: `${finishX}%`, background: 'repeating-conic-gradient(#fff 0 25%, #111 0 50%) 0 0 / 8px 8px' }}
             />
             {/* 말: 오른쪽 끝(코끝)이 위치 기준 */}
             <div className="absolute" style={{ left: `${nose}%` }}>

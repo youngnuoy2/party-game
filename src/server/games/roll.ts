@@ -20,29 +20,38 @@ interface PState {
 }
 
 function makeCourse(): Course {
-  const rows = [124, 94, 64, 34];
+  // 벽 4줄 (아래 → 위). 벽 사이 구간 높이 28 → 구멍(지름 9)을 가운데 두면 위·아래 틈이 각각 9.5
+  // (공 지름 6.4 + 여유 2 = 8.4 이상) 이라 구멍 위나 아래로 반드시 지나갈 수 있음.
+  const rows = [118, 86, 54, 22];
   const walls: Rect[] = [];
   const holes: { x: number; y: number }[] = [];
   let side = Math.random() < 0.5 ? 0 : 1;
+  const gaps: number[] = [];
   rows.forEach((y, i) => {
     // 통로 위치: 왼쪽/오른쪽 번갈아 (가끔 가운데) → 지그재그 코스
     const gx = i === 1 && Math.random() < 0.3 ? rand(35, 43) : side === 0 ? rand(6, 14) : rand(64, 72);
     side = 1 - side;
+    gaps.push(gx + GAP / 2);
     walls.push({ x: 0, y, w: gx, h: WALL_T });
     walls.push({ x: gx + GAP, y, w: ROLL_W - gx - GAP, h: WALL_T });
-    // 각 구간마다 구멍 1~2개 (통로 바로 아래는 피함)
-    const bandTop = y + WALL_T;
-    const bandBottom = i === 0 ? 142 : rows[i - 1];
-    const n = rand(1, 2);
-    for (let k = 0; k < n; k++) {
+  });
+  const place = (bandTop: number, bandBottom: number, count: number, avoidX: number[]) => {
+    const cy = (bandTop + bandBottom) / 2;
+    for (let k = 0; k < count; k++) {
       let hx = rand(12, 88);
       let guard = 0;
-      while ((Math.abs(hx - (gx + GAP / 2)) < 16 || holes.some((h) => Math.abs(h.x - hx) < 18 && Math.abs(h.y - (bandTop + bandBottom) / 2) < 12)) && guard++ < 30) hx = rand(12, 88);
-      holes.push({ x: hx, y: Math.round((bandTop + bandBottom) / 2 + rand(-3, 3)) });
+      // 통로(벽 틈) 바로 앞, 출발점, 다른 구멍과는 거리를 둠
+      while ((avoidX.some((ax) => Math.abs(hx - ax) < 16) || holes.some((h) => Math.abs(h.y - cy) < 6 && Math.abs(h.x - hx) < 18)) && guard++ < 50) hx = rand(12, 88);
+      if (guard >= 50) continue;
+      holes.push({ x: hx, y: Math.round(cy + rand(-1, 1)) });
     }
-  });
-  const lastGap = walls[walls.length - 2].w + GAP / 2;
-  return { walls, holes, goal: { x: clamp(100 - lastGap, 15, 85), y: 14 } };
+  };
+  // 출발 구역 (첫 벽 아래 ~ 바닥): 출발점과 첫 통로를 피해 1개
+  place(rows[0] + WALL_T, 160, 1, [START.x, gaps[0]]);
+  // 벽과 벽 사이 3개 구간: 위·아래 통로 앞을 피해 1~2개씩
+  for (let i = 1; i < rows.length; i++) place(rows[i] + WALL_T, rows[i - 1], rand(1, 2), [gaps[i], gaps[i - 1]]);
+  const lastGap = gaps[gaps.length - 1];
+  return { walls, holes, goal: { x: clamp(100 - lastGap, 15, 85), y: 11 } };
 }
 
 /** 이론상 가장 빠른 도착 시간: 지그재그 경로 길이 ÷ 최고 속도 (여유 30%) */
