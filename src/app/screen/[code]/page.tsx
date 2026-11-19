@@ -7,7 +7,8 @@ import { isSoundOn, setSound, sfx, unlockAudio } from '@/lib/sound';
 import { useJoinUrl } from '@/lib/useJoinUrl';
 import { useOnConnect, useRoomStreams } from '@/lib/useRoom';
 import { useServerNow } from '@/lib/useNow';
-import { BubbleField, CupsBoard, cupsCaption, HORSE_COLORS, HorseTrack, RhythmLane, type BubbleT, type CupsPayload, type HorsePayload, type RhythmPayload } from '@/components/games/visuals';
+import type { Course } from '@/shared/rollCourse';
+import { BubbleField, RollCourse, CupsBoard, cupsCaption, HORSE_COLORS, HorseTrack, RhythmLane, type BubbleT, type CupsPayload, type HorsePayload, type RhythmPayload } from '@/components/games/visuals';
 import { GAME_META, TIE_RULE } from '@/shared/gameMeta';
 import type { PublicState } from '@/shared/types';
 
@@ -253,6 +254,18 @@ function Playing({ state }: { state: PublicState }) {
         </div>
       ) : g.gameId === 'potato' ? (
         <PotatoScreen state={state} />
+      ) : g.gameId === 'roll' ? (
+        <div className="grid flex-1 grid-cols-[520px_1fr] gap-10">
+          <RollCourse {...(g.payload as { course: Course; holeR: number; goalR: number })} className="h-[780px] w-[488px]" />
+          <div className="flex flex-col gap-6">
+            <div className="text-5xl font-bold">📱 폰을 기울여 공을 🏁 도착점까지!</div>
+            <div className="text-4xl text-white/70">🕳️ 구멍에 빠지면 출발점으로 돌아가요</div>
+            <div className="text-4xl">
+              도착 <span className="font-display text-6xl gold-text">{state.submitted}</span> / {state.participantCount}명
+            </div>
+            <LiveTop5 state={state} />
+          </div>
+        </div>
       ) : (
         <LiveBoard state={state} />
       )}

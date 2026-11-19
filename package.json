@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "cross-env NODE_ENV=production tsx server.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx scripts/verify-data.ts && tsx scripts/sim.ts",
-    "verify:data": "tsx scripts/verify-data.ts",
+    "test": "tsx scripts/verify-data.ts && tsx scripts/verify-roll.ts && tsx scripts/sim.ts",
+    "verify:data": "tsx scripts/verify-data.ts && tsx scripts/verify-roll.ts",
     "sim": "tsx scripts/sim.ts"
   },
   "engines": {

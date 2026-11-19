@@ -253,6 +253,16 @@ export const GAME_META: Record<GameId, GameMeta> = {
     scoring: '1000점에서 들고 있던 1초당 50점 감점, 터질 때 소지자는 0점',
     approxSeconds: 25,
   },
+  roll: {
+    id: 'roll',
+    name: '데굴데굴',
+    emoji: '⚽',
+    color: ['#14b8a6', '#6366f1'],
+    short: '폰을 기울여 구멍을 피해 공을 도착점까지 굴려라!',
+    howTo: ['폰을 기울이면 공이 굴러가요 (센서가 없으면 화면 드래그)', '🕳️ 구멍에 빠지면 출발점으로!', '🏁 도착점에 가장 빨리 도착하면 승리'],
+    scoring: '도착: 600점 + 1등 기록 대비 속도 400점 · 미도착: 진행률 × 500점',
+    approxSeconds: 40,
+  },
 };
 
 export const ALL_GAME_IDS = Object.keys(GAME_META) as GameId[];

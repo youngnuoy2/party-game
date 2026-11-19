@@ -294,6 +294,24 @@ async function main() {
           await sleep(300);
         }
         b.s.off('game:push', handler);
+      } else if (gameId === 'roll') {
+        const g = st().game!;
+        if (bi === 0) {
+          const jump = await act(b, { type: 'progress', p: 1 }); // 순간이동 시도
+          const early = await act(b, { type: 'finish', t: 500 }); // 0.5초 도착 시도
+          assert(jump.ok && (jump.data as any).progress < 0.2 && !early.ok, `[roll] 순간이동·초고속 도착 차단 (진행률 ${(jump.data as any).progress.toFixed(2)})`);
+        }
+        let prog = 0;
+        const speed = 0.04 + b.skill * 0.06; // 0.3초마다 진행률 증가
+        while (isOn() && prog < 1) {
+          await sleep(300);
+          prog = Math.min(1, prog + speed);
+          await act(b, { type: 'progress', p: prog, fell: Math.random() < 0.05 });
+          if (prog >= 1 && b.skill > 0.3) {
+            await act(b, { type: 'finish', t: Date.now() - g.stepStartedAt });
+            break;
+          }
+        }
       } else if (gameId === 'memory') {
         while (isOn()) {
           const r = await act(b, { type: 'next' });

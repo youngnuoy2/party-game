@@ -9,6 +9,7 @@ import { bombGame } from './bomb';
 import { bubbleGame } from './bubble';
 import { horseGame } from './horse';
 import { potatoGame } from './potato';
+import { rollGame } from './roll';
 import { stackGame } from './stack';
 import { cupsGame } from './cups';
 import { minorityGame } from './minority';
@@ -44,4 +45,5 @@ export const GAMES: Record<GameId, GameModule> = {
   bubble: bubbleGame,
   horse: horseGame,
   potato: potatoGame,
+  roll: rollGame,
 };

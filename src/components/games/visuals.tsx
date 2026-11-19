@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { serverNow } from '@/lib/socket';
 import { sfx } from '@/lib/sound';
+import { ROLL_H, ROLL_W, START, type Course } from '@/shared/rollCourse';
 import { cx } from '../ui';
 
 function useFrameNow() {
@@ -223,26 +224,46 @@ function horseProgress(p: HorsePayload, h: number, t: number) {
   return prev + (next - prev) * ((t - k * seg) / seg);
 }
 
+const FINISH_X = 72; // 결승선 위치 (레인 너비 %)
+const START_X = 9; // 출발선 (말 코끝 기준)
+const RUN_OUT = 5; // 결승선 통과 후 더 달려가는 거리
+
 export function HorseTrack({ p, raceStartedAt, mine, big = false }: { p: HorsePayload; raceStartedAt: number | null; mine?: number | null; big?: boolean }) {
   const now = useFrameNow();
   const t = raceStartedAt ? now - raceStartedAt : 0;
   return (
     <div className={cx('relative w-full space-y-2 rounded-3xl border border-white/10 bg-gradient-to-r from-emerald-900/50 to-emerald-800/30 p-3', big && 'space-y-4 p-6')}>
-      <div className="absolute inset-y-2 right-[15%] w-1.5 bg-[repeating-linear-gradient(0deg,#fff_0_8px,#000_8px_16px)] opacity-70" />
       {Array.from({ length: p.horses }, (_, h) => {
-        const prog = raceStartedAt ? horseProgress(p, h, t) : 0;
-        const place = p.order ? p.order.indexOf(h) + 1 : null;
+        const f = p.finish?.[h];
+        const finished = raceStartedAt != null && f != null && t >= f;
+        // 말의 코끝 위치: 도착 순간 정확히 결승선, 도착 후에는 결승선을 지나 조금 더 달려가 멈춤
+        const nose = !raceStartedAt
+          ? START_X
+          : finished
+            ? FINISH_X + Math.min(RUN_OUT, ((t - f!) / 600) * RUN_OUT)
+            : START_X + horseProgress(p, h, t) * (FINISH_X - START_X);
+        // 도착 순위: 결승선을 넘은 말부터 실시간 표시
+        const place = finished && p.finish ? p.finish.filter((x) => x <= f!).length : null;
         return (
-          <div key={h} className={cx('relative flex items-center rounded-full bg-black/25', big ? 'h-24' : 'h-12', mine === h && 'ring-4 ring-amber-300')}>
-            <span className={cx('absolute left-3 font-display text-white/50', big ? 'text-4xl' : 'text-lg')}>{h + 1}</span>
-            <div className="absolute" style={{ left: `${6 + prog * 75}%`, transition: 'none' }}>
-              <div className={cx('relative -translate-x-1/2 -scale-x-100 leading-none', big ? 'text-7xl' : 'text-4xl')}>
-                🏇
+          <div key={h} className={cx('relative flex items-center overflow-hidden rounded-full bg-black/25', big ? 'h-24' : 'h-12', mine === h && 'ring-4 ring-amber-300')}>
+            <span className={cx('absolute left-3 z-10 font-display text-white/50', big ? 'text-4xl' : 'text-lg')}>{h + 1}</span>
+            {/* 결승선 (체커 무늬) */}
+            <div
+              className={cx('absolute inset-y-0', big ? 'w-3' : 'w-2')}
+              style={{ left: `${FINISH_X}%`, background: 'repeating-conic-gradient(#fff 0 25%, #111 0 50%) 0 0 / 8px 8px' }}
+            />
+            {/* 말: 오른쪽 끝(코끝)이 위치 기준 */}
+            <div className="absolute" style={{ left: `${nose}%` }}>
+              <div className={cx('relative -translate-x-full leading-none', big ? 'text-7xl' : 'text-4xl')}>
+                <span className="inline-block -scale-x-100">🏇</span>
                 <span className="absolute -bottom-1 left-1/2 h-2 w-8 -translate-x-1/2 rounded-full" style={{ background: HORSE_COLORS[h] }} />
               </div>
             </div>
-            {place && <span className={cx('absolute right-3 font-display', big ? 'text-5xl' : 'text-xl', place === 1 ? 'text-amber-300' : 'text-white/70')}>{place}등</span>}
-            {p.counts && !place && <span className={cx('absolute right-3 text-white/60', big ? 'text-3xl' : 'text-sm')}>👥{p.counts[h]}</span>}
+            {place ? (
+              <span className={cx('absolute right-3 font-display', big ? 'text-5xl' : 'text-lg', place === 1 ? 'text-amber-300' : 'text-white/80')}>🏁{place}등</span>
+            ) : (
+              p.counts && <span className={cx('absolute right-3 text-white/60', big ? 'text-3xl' : 'text-sm')}>👥{p.counts[h]}</span>
+            )}
           </div>
         );
       })}
@@ -291,5 +312,34 @@ export function BubbleField({ bubbles, stepStartedAt, popped, onPop, big = false
         );
       })}
     </div>
+  );
+}
+
+// ───────────────────────── 데굴데굴 코스 ─────────────────────────
+export function RollCourse({ course, holeR, goalR, className, children }: { course: Course; holeR: number; goalR: number; className?: string; children?: React.ReactNode }) {
+  return (
+    <svg viewBox={`0 0 ${ROLL_W} ${ROLL_H}`} className={cx('rounded-2xl bg-gradient-to-b from-emerald-900/70 to-teal-950/70', className)} preserveAspectRatio="xMidYMid meet">
+      <rect x={0.5} y={0.5} width={ROLL_W - 1} height={ROLL_H - 1} rx={3} fill="none" stroke="rgba(255,255,255,.4)" strokeWidth={1} />
+      {/* 도착점 */}
+      <circle cx={course.goal.x} cy={course.goal.y} r={goalR} fill="url(#goalg)" stroke="#fde68a" strokeWidth={0.8} />
+      <text x={course.goal.x} y={course.goal.y + 2} textAnchor="middle" fontSize={6}>
+        🏁
+      </text>
+      {/* 출발점 */}
+      <circle cx={START.x} cy={START.y} r={4.5} fill="none" stroke="rgba(255,255,255,.35)" strokeDasharray="1.5 1.5" strokeWidth={0.6} />
+      {course.walls.map((w, i) => (
+        <rect key={i} x={w.x} y={w.y} width={w.w} height={w.h} rx={1} fill="#a16207" stroke="#fbbf24" strokeWidth={0.4} />
+      ))}
+      {course.holes.map((h, i) => (
+        <circle key={i} cx={h.x} cy={h.y} r={holeR} fill="#020617" stroke="#475569" strokeWidth={0.6} />
+      ))}
+      <defs>
+        <radialGradient id="goalg">
+          <stop offset="0" stopColor="#fde68a" />
+          <stop offset="1" stopColor="#f59e0b" />
+        </radialGradient>
+      </defs>
+      {children}
+    </svg>
   );
 }

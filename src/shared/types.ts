@@ -36,7 +36,8 @@ export type GameId =
   | 'stack'
   | 'bubble'
   | 'horse'
-  | 'potato';
+  | 'potato'
+  | 'roll';
 
 export type MathDifficulty = 'easy' | 'normal' | 'hard';
 export type ChosungMode = 'choice' | 'input';

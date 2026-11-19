@@ -11,6 +11,7 @@ import BombGame from './BombGame';
 import BubbleGame from './BubbleGame';
 import HorseGame from './HorseGame';
 import PotatoGame from './PotatoGame';
+import RollGame from './RollGame';
 import StackGame from './StackGame';
 import CupsGame from './CupsGame';
 import MinorityGame from './MinorityGame';
@@ -45,4 +46,5 @@ export const PLAYER_GAMES: Record<GameId, ComponentType<GameProps>> = {
   bubble: BubbleGame,
   horse: HorseGame,
   potato: PotatoGame,
+  roll: RollGame,
 };
